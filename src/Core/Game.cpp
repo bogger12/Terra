@@ -7,6 +7,10 @@
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/Texture.hpp"
 
+#ifndef ASSET_DIR
+#define ASSET_DIR "../assets"
+#endif
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
@@ -38,7 +42,9 @@ Game::Game(std::string windowName, const int w, const int h)
 
     // Load texture:
     int width, height, nrChannels;
-    unsigned int textureID = LoadTextureFromPath("../assets/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
+    std::filesystem::path cwd = std::filesystem::current_path();
+    std::cout << "Current working directory: " << cwd << std::endl;
+    unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
 
     std::vector<float> cube_vertices = {
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
