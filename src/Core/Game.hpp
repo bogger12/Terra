@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "Window.hpp"
+#include "WindowManager.hpp"
 #include <entt/entt.hpp>
 #include "../Systems/RenderSystem.hpp"
 #include <camera.h>
@@ -12,8 +12,6 @@ class Game {
         void Events(float deltaTime);
         void Render();
     private:
-        Window window;
-
         entt::registry m_registry;
 
         entt::dispatcher m_dispatcher;

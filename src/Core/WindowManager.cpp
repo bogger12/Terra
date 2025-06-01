@@ -1,24 +1,31 @@
-#include "Window.hpp"
+#include "WindowManager.hpp"
 #include <iostream>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
-Window::Window()
+WindowManager::WindowManager()
     : window{nullptr}
 {
 }
 
-Window::~Window()
+WindowManager::~WindowManager()
 {
     glfwTerminate();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
-void Window::Create(int w, int h, std::string windowName, 
+void WindowManager::Create(int width, int height, std::string windowName, 
     GLFWframebuffersizefun framebuffer_size_callback, 
     GLFWcursorposfun mouse_callback, 
     GLFWscrollfun scroll_callback
 )
 {
-    width = w;
-    height = h;
+    this->width = width;
+    this->height = height;
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -58,18 +65,30 @@ void Window::Create(int w, int h, std::string windowName,
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+
+    // IMGUI STUFF
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
 }
 
-void Window::OnKeyDown()
+void WindowManager::OnKeyDown()
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
 
-void Window::Close() noexcept {
+void WindowManager::Close() noexcept {
 }
 
-void Window::ChangeMouseMode(int value = GLFW_CURSOR_DISABLED)
+void WindowManager::ChangeMouseMode(int value = GLFW_CURSOR_DISABLED)
 {
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, value);

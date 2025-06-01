@@ -4,16 +4,17 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
-class Window {
+class WindowManager {
     public:
-        Window();
-        ~Window();
+        WindowManager();
+        ~WindowManager();
         int width, height;
-        void Create(int w, int h, std::string windowName,
+        void Create(int width, int height, std::string windowName,
             GLFWframebuffersizefun framebuffer_size_callback,
             GLFWcursorposfun mouse_callback,
             GLFWscrollfun scroll_callback);
         GLFWwindow* GetWindow() { return window; };
+        void SetSize(int width, int height) { this->width = width; this->height = height; };
         void Close() noexcept;
         void OnKeyDown();
         void ChangeMouseMode(int value);

@@ -1,4 +1,7 @@
 #include <random>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include "Game.hpp"
 #include "../Components/All.hpp"
@@ -15,6 +18,9 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
+WindowManager windowManager = WindowManager();
+
+
 float fov = 45.0f;
 bool firstMouse = true;
 float lastX = 800.0f / 2.0;
@@ -26,16 +32,15 @@ Camera camera;
 Shader default_shader;
 Shader light_source_shader;
 
-
 Game::Game(std::string windowName, const int w, const int h)
-    : window{}, renderSystem{}
+    : renderSystem{}
 {
-    window.Create(w, h, windowName, framebuffer_size_callback, mouse_callback, scroll_callback);
+    windowManager.Create(w, h, windowName, framebuffer_size_callback, mouse_callback, scroll_callback);
 
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    default_shader = Shader(ASSET_DIR "/shaders/vert.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+    default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
     light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
 
     const auto cube_entity = m_registry.create();
@@ -50,47 +55,50 @@ Game::Game(std::string windowName, const int w, const int h)
     unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
 
     std::vector<float> cube_vertices = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f};
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+
 
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -103,9 +111,10 @@ Game::Game(std::string windowName, const int w, const int h)
 
 
     // Create light entity:
-    m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    m_registry.emplace<Texture>(light_entity, textureID);
+    m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(0.1f, 0.1f, 0.1f));
+    // m_registry.emplace<Texture>(light_entity, textureID);
     m_registry.emplace<ModelData>(light_entity, cube_vertices, &light_source_shader);
+    m_registry.emplace<Light>(light_entity);
 
     // Set Game Camera
     camera = Camera();
@@ -115,7 +124,7 @@ Game::Game(std::string windowName, const int w, const int h)
     // m_dispatcher.sink<KeyUp>().connect<&MoveSystem::on_key_up>(m_move_system);
 
     // Assign events to window.
-    m_dispatcher.sink<KeyDown>().connect<&Window::OnKeyDown>(window);
+    m_dispatcher.sink<KeyDown>().connect<&WindowManager::OnKeyDown>(windowManager);
 
     // Set up collideables
     // m_collideables.ai = ai_paddle;
@@ -133,7 +142,7 @@ const int Game::Run()
 
     renderSystem.BindVertexArray(m_registry);
 
-    GLFWwindow *window = this->window.GetWindow();
+    GLFWwindow *window = windowManager.GetWindow();
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
@@ -155,14 +164,14 @@ const int Game::Run()
 
 void Game::Events(float deltaTime)
 {
-    GLFWwindow* window = this->window.GetWindow();
+    GLFWwindow* window = windowManager.GetWindow();
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        this->window.ChangeMouseMode(GLFW_CURSOR_NORMAL);
+        windowManager.ChangeMouseMode(GLFW_CURSOR_NORMAL);
         useMouse = false;
     }
     // glfwSetWindowShouldClose(window, true);
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        this->window.ChangeMouseMode(GLFW_CURSOR_DISABLED);
+        windowManager.ChangeMouseMode(GLFW_CURSOR_DISABLED);
         firstMouse = true; // Mouse gets reset when cursor mode changed
         useMouse = true;
     }
@@ -178,7 +187,7 @@ void Game::Events(float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
     {
         std::cout << "Shaders Reloaded" << std::endl;
-        default_shader = Shader(ASSET_DIR "/shaders/vert.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+        default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
         light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
     }
 }
@@ -189,12 +198,22 @@ void Game::Render()
     // ------
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    renderSystem.Render(window, m_registry, fov, camera);
+
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(); // Show demo window! :)
+
+    renderSystem.Render(windowManager, m_registry, fov, camera);
+
+    // Rendering
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
-    glfwSwapBuffers(window.GetWindow());
+    glfwSwapBuffers(windowManager.GetWindow());
     glfwPollEvents();
 }
 
@@ -205,6 +224,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+    windowManager.SetSize(width, height);
 }
 
 // glfw: whenever the mouse moves, this callback is called

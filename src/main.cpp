@@ -17,7 +17,7 @@ int main(int argsc, char *argsv[])
 
     try
     {
-        Game game("OpenGL Game", 640, 480);
+        Game game("OpenGL Game", 800, 600);
         return game.Run();
     }
     catch (const std::exception &e)

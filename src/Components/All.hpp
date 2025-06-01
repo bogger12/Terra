@@ -24,3 +24,7 @@ struct ModelData {
     Shader *shader;
     unsigned int VBO = 0, VAO = 0;
 };
+
+struct Light {
+    float intensity = 1; // unused
+};
