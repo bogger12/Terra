@@ -4,10 +4,6 @@
 #include <shader.h>
 #include <vector>
 
-#ifndef ASSET_DIR
-#define ASSET_DIR "../assets"
-#endif
-
 struct Transform {
     glm::vec3 position;
     glm::quat rotation;
@@ -25,6 +21,6 @@ struct Texture {
 struct ModelData {
     std::vector<float> vertices;
     // std::vector<unsigned int> indices;
+    Shader *shader;
     unsigned int VBO = 0, VAO = 0;
-    Shader shader = Shader(ASSET_DIR "/shaders/vert.glsl", ASSET_DIR "/shaders/frag.glsl");
 };

@@ -16,6 +16,7 @@ class Window {
         GLFWwindow* GetWindow() { return window; };
         void Close() noexcept;
         void OnKeyDown();
+        void ChangeMouseMode(int value);
 
     private:
         GLFWwindow* window;

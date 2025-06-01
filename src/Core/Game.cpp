@@ -19,8 +19,13 @@ float fov = 45.0f;
 bool firstMouse = true;
 float lastX = 800.0f / 2.0;
 float lastY = 600.0 / 2.0;
+bool useMouse = true;
 
 Camera camera;
+
+Shader default_shader;
+Shader light_source_shader;
+
 
 Game::Game(std::string windowName, const int w, const int h)
     : window{}, renderSystem{}
@@ -30,20 +35,18 @@ Game::Game(std::string windowName, const int w, const int h)
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    const auto cube_entity = m_registry.create();
-    const auto cube_entity2 = m_registry.create();
+    default_shader = Shader(ASSET_DIR "/shaders/vert.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+    light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
 
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> randPosition(-20.0f, 20.0f);
-    std::uniform_real_distribution<float> randRotation(0.0f, 3.0f);
-    std::uniform_real_distribution<float> randScale(3.0f, 5.0f);
-    std::uniform_real_distribution<float> randColor(0.0f, 1.0f);
-    std::uniform_real_distribution<float> randGravity(-10.0f, -1.0f);
+    const auto cube_entity = m_registry.create();
+    // const auto cube_entity2 = m_registry.create();
+    const auto light_entity = m_registry.create();
 
     // Load texture:
     int width, height, nrChannels;
     std::filesystem::path cwd = std::filesystem::current_path();
     std::cout << "Current working directory: " << cwd << std::endl;
+    std::cout << "Asset directory: " << ASSET_DIR << std::endl;
     unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
 
     std::vector<float> cube_vertices = {
@@ -92,22 +95,17 @@ Game::Game(std::string windowName, const int w, const int h)
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
     m_registry.emplace<Texture>(cube_entity, textureID);
-    m_registry.emplace<ModelData>(cube_entity, cube_vertices);
+    m_registry.emplace<ModelData>(cube_entity, cube_vertices, &default_shader);
 
-    m_registry.emplace<Transform>(cube_entity2, glm::vec3(0.0f, 2.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.5f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    m_registry.emplace<Texture>(cube_entity2, textureID);
-    m_registry.emplace<ModelData>(cube_entity2, cube_vertices);
+    // m_registry.emplace<Transform>(cube_entity2, glm::vec3(0.0f, 2.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.5f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    // m_registry.emplace<Texture>(cube_entity2, textureID);
+    // m_registry.emplace<ModelData>(cube_entity2, cube_vertices, &default_shader);
 
-    for (int i = 0; i < 500; i++)
-    {
-        glm::vec3 position = glm::vec3(randPosition(generator), randPosition(generator), randPosition(generator));
-        glm::vec3 rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator));
-        glm::vec3 scale = glm::vec3(randScale(generator), randScale(generator), randScale(generator));
-        const auto cube_entity = m_registry.create();
-        m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
-        m_registry.emplace<Texture>(cube_entity, textureID);
-        m_registry.emplace<ModelData>(cube_entity, cube_vertices);
-    }
+
+    // Create light entity:
+    m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    m_registry.emplace<Texture>(light_entity, textureID);
+    m_registry.emplace<ModelData>(light_entity, cube_vertices, &light_source_shader);
 
     // Set Game Camera
     camera = Camera();
@@ -158,8 +156,16 @@ const int Game::Run()
 void Game::Events(float deltaTime)
 {
     GLFWwindow* window = this->window.GetWindow();
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        this->window.ChangeMouseMode(GLFW_CURSOR_NORMAL);
+        useMouse = false;
+    }
+    // glfwSetWindowShouldClose(window, true);
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        this->window.ChangeMouseMode(GLFW_CURSOR_DISABLED);
+        firstMouse = true; // Mouse gets reset when cursor mode changed
+        useMouse = true;
+    }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -169,13 +175,19 @@ void Game::Events(float deltaTime)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        std::cout << "Shaders Reloaded" << std::endl;
+        default_shader = Shader(ASSET_DIR "/shaders/vert.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+        light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+    }
 }
 
 void Game::Render()
 {
     // render
     // ------
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     renderSystem.Render(window, m_registry, fov, camera);
@@ -199,7 +211,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
-    std::cout << "mouse moved " << xposIn << " " << yposIn << std::endl;
+    // std::cout << "mouse moved " << xposIn << " " << yposIn << std::endl;
+    if (!useMouse) return;
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 

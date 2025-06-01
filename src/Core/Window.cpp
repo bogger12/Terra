@@ -68,3 +68,9 @@ void Window::OnKeyDown()
 
 void Window::Close() noexcept {
 }
+
+void Window::ChangeMouseMode(int value = GLFW_CURSOR_DISABLED)
+{
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, value);
+}
