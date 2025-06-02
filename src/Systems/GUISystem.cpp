@@ -1,0 +1,138 @@
+#include "GUISystem.hpp"
+#include "../Components/All.hpp"
+#include "../Systems/RenderSystem.hpp"
+#include "../Systems/TextureSystem.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state, void (*reload_shaders)())
+{
+    ImGuiIO &io = ImGui::GetIO();
+    // Sidebad Window
+    {
+        static float f = 0.0f;
+        static int counter = 0;
+
+        static float windowWidth = 300.0f;
+
+        // Set Window Parameters
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - windowWidth, 0));
+        ImGui::SetNextWindowSize(ImVec2(windowWidth, io.DisplaySize.y)); // Optional: full height
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f)); // Window Bg Color
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8f, 0.8f, 0.8f, 1.0f)); // Window Border Color
+
+        ImGui::Begin("Hello, world!", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
+        windowWidth = ImGui::GetWindowSize().x;
+
+        ImGui::Text("This is some useful text.");                       // Display some text (you can use a format strings too)
+        ImGui::Checkbox("Demo Window", &global_state->show_demo_window); // Edit bools storing our window open/close state
+
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);                          // Edit 1 float using a slider from 0.0f to 1.0f
+        ImGui::ColorEdit3("clear color", (float *)&global_state->clear_color); // Edit 3 floats representing a color
+
+        if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
+            counter++;
+        ImGui::SameLine();
+        ImGui::Text("counter = %d", counter);
+
+        if (ImGui::Button("Reload Shaders"))
+        {
+            reload_shaders();
+        }
+
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        for (auto const& [timer, time] : global_state->time_map)
+        {
+            ImGui::Text("%s : %.3f ms", timer.c_str(), time);
+        }
+
+        auto allEntities = registry.view<entt::entity>();
+
+        ImGui::BeginChild("Entities", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
+
+        for (auto entity : allEntities) {
+            uint32_t id = static_cast<uint32_t>(entity);
+            ImGui::PushID(id);
+            if (ImGui::TreeNode("", "Entity ID: %u", static_cast<uint32_t>(id)))
+            {   
+                // Transform
+                if (registry.any_of<Transform>(entity) && ImGui::TreeNode("Transform")) {
+                    auto &transform = registry.get<Transform>(entity);
+                    ImGui::DragFloat3("Transform", glm::value_ptr(transform.position));
+                    ImGui::TreePop();
+                }
+                
+
+                // Texture
+                if (registry.any_of<Texture>(entity) && ImGui::TreeNode("Texture"))
+                {
+                    auto &texture = registry.get<Texture>(entity);
+                    if (ImGui::InputText("Path", &texture.texture_path)) {
+                        TextureSystem::LoadTextures(registry); // Reload on path change
+                    };
+                    ImGui::Text("size = %d x %d", texture.width, texture.height);
+                    ImGui::Text("textureID: %u", texture.textureID);
+                    float aspect = (float)texture.width / (float)texture.height;
+                    ImGui::Image((ImTextureID)(intptr_t)texture.textureID, ImVec2(100.0f * aspect, 100.0f), {0, 1}, {1, 0});
+
+                    ImGui::TreePop();
+                }
+
+                // ModelData
+                if (registry.any_of<ModelData>(entity) && ImGui::TreeNode("ModelData"))
+                {
+                    auto &modelData = registry.get<ModelData>(entity);
+                    ImGui::Text("VBO: %d, VAO: %d", modelData.VBO, modelData.VAO);
+                    for (int i = 0; i < 36; i ++) {
+                        ImGui::PushID(i);
+                        if (ImGui::DragFloat3("", &modelData.vertices[i*5])) {
+                            RenderSystem::BindVertexArray(registry);
+                        };
+                        ImGui::PopID();
+                    };
+                    ImGui::TreePop();
+                }
+
+                // RenderingData
+                if (registry.any_of<RenderingData>(entity) && ImGui::TreeNode("RenderingData"))
+                {
+                    auto &renderingData = registry.get<RenderingData>(entity);
+                    ImGui::Text("Shader ID: %u", renderingData.shader->ID);
+                    if (ImGui::TreeNode("Material")) {
+                        ImGui::ColorEdit3("Albedo", glm::value_ptr(renderingData.material.albedo));
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(renderingData.material.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(renderingData.material.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(renderingData.material.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::TreePop();
+                }
+
+                // Light
+                if (registry.any_of<Light>(entity) && ImGui::TreeNode("Light"))
+                {
+                    auto &light = registry.get<Light>(entity);
+
+                    if (ImGui::TreeNode("Light Material")) {
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(light.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(light.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(light.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::TreePop();
+                }
+
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+
+            // ImGui::Text("Entity ID: %u", static_cast<uint32_t>(entity));
+        }
+        ImGui::EndChild();
+
+        ImGui::End();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleColor();
+    }
+}

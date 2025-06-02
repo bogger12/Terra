@@ -8,7 +8,8 @@
 #include "../Events/KeyDown.hpp"
 #include <camera.h>
 #include "../Systems/RenderSystem.hpp"
-#include "../Systems/Texture.hpp"
+#include "../Systems/TextureSystem.hpp"
+#include "../Systems/GUISystem.hpp"
 
 #ifndef ASSET_DIR
 #define ASSET_DIR "../assets"
@@ -17,6 +18,8 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+void reload_shaders();
+void test_performance_entities(entt::registry &m_registry, std::vector<float> &cube_vertices, int numObjects, float positionRange[2], float scaleRange[2]);
 
 WindowManager windowManager = WindowManager();
 
@@ -32,27 +35,24 @@ Camera camera;
 Shader default_shader;
 Shader light_source_shader;
 
+
 Game::Game(std::string windowName, const int w, const int h)
-    : renderSystem{}
 {
     windowManager.Create(w, h, windowName, framebuffer_size_callback, mouse_callback, scroll_callback);
 
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
-    light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+    reload_shaders();
 
     const auto cube_entity = m_registry.create();
     // const auto cube_entity2 = m_registry.create();
     const auto light_entity = m_registry.create();
 
-    // Load texture:
-    int width, height, nrChannels;
     std::filesystem::path cwd = std::filesystem::current_path();
     std::cout << "Current working directory: " << cwd << std::endl;
     std::cout << "Asset directory: " << ASSET_DIR << std::endl;
-    unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
+    // unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
 
     std::vector<float> cube_vertices = {
         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -98,23 +98,23 @@ Game::Game(std::string windowName, const int w, const int h)
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
     };
 
-
+    float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
+    test_performance_entities(m_registry, cube_vertices, 5000, positionRange, scaleRange);
 
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    m_registry.emplace<Texture>(cube_entity, textureID);
-    m_registry.emplace<ModelData>(cube_entity, cube_vertices, &default_shader);
-
-    // m_registry.emplace<Transform>(cube_entity2, glm::vec3(0.0f, 2.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.5f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
-    // m_registry.emplace<Texture>(cube_entity2, textureID);
-    // m_registry.emplace<ModelData>(cube_entity2, cube_vertices, &default_shader);
+    m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
+    m_registry.emplace<ModelData>(cube_entity, cube_vertices);
+    m_registry.emplace<RenderingData>(cube_entity, &default_shader, 
+        Material{glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
+    );
 
 
     // Create light entity:
     m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(0.1f, 0.1f, 0.1f));
-    // m_registry.emplace<Texture>(light_entity, textureID);
-    m_registry.emplace<ModelData>(light_entity, cube_vertices, &light_source_shader);
-    m_registry.emplace<Light>(light_entity);
+    m_registry.emplace<ModelData>(light_entity, cube_vertices);
+    m_registry.emplace<RenderingData>(light_entity, &light_source_shader);
+    m_registry.emplace<Light>(light_entity, glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     // Set Game Camera
     camera = Camera();
@@ -126,11 +126,6 @@ Game::Game(std::string windowName, const int w, const int h)
     // Assign events to window.
     m_dispatcher.sink<KeyDown>().connect<&WindowManager::OnKeyDown>(windowManager);
 
-    // Set up collideables
-    // m_collideables.ai = ai_paddle;
-    // m_collideables.player = player_paddle;
-    // m_collideables.ball = ball;
-    // m_collideables.registery = &m_registry;
 }
 
 const int Game::Run()
@@ -140,7 +135,8 @@ const int Game::Run()
     float deltaTime = 0.0f; // time between current frame and last frame
     float lastFrame = 0.0f;
 
-    renderSystem.BindVertexArray(m_registry);
+    RenderSystem::BindVertexArray(m_registry);
+    TextureSystem::LoadTextures(m_registry);
 
     GLFWwindow *window = windowManager.GetWindow();
     while (!glfwWindowShouldClose(window))
@@ -162,19 +158,27 @@ const int Game::Run()
     return 0;
 }
 
+bool pressedEscLastFrame = false;
+
 void Game::Events(float deltaTime)
 {
     GLFWwindow* window = windowManager.GetWindow();
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        windowManager.ChangeMouseMode(GLFW_CURSOR_NORMAL);
-        useMouse = false;
+        if (!pressedEscLastFrame) {
+            windowManager.ChangeMouseMode((useMouse == true) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+            useMouse = !useMouse;
+            pressedEscLastFrame = true;
+        }
+    } else if (pressedEscLastFrame) {
+        pressedEscLastFrame = false;
+        firstMouse = true; // Mouse gets reset when cursor mode changed
     }
     // glfwSetWindowShouldClose(window, true);
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        windowManager.ChangeMouseMode(GLFW_CURSOR_DISABLED);
-        firstMouse = true; // Mouse gets reset when cursor mode changed
-        useMouse = true;
-    }
+    // if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    //     windowManager.ChangeMouseMode(GLFW_CURSOR_DISABLED);
+    //     firstMouse = true; // Mouse gets reset when cursor mode changed
+    //     useMouse = true;
+    // }
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(FORWARD, deltaTime);
@@ -184,32 +188,45 @@ void Game::Events(float deltaTime)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-    {
-        std::cout << "Shaders Reloaded" << std::endl;
-        default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
-        light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
-    }
+    // if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    // {
+    //     std::cout << "Shaders Reloaded" << std::endl;
+    //     default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+    //     light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+    // }
 }
 
 void Game::Render()
 {
     // render
     // ------
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(global_state.clear_color.x * global_state.clear_color.w, global_state.clear_color.y * global_state.clear_color.w, global_state.clear_color.z * global_state.clear_color.w, global_state.clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+    auto start = std::chrono::high_resolution_clock::now();
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow(); // Show demo window! :)
+    if (global_state.show_demo_window) ImGui::ShowDemoWindow(); // Show demo window! :)
 
-    renderSystem.Render(windowManager, m_registry, fov, camera);
+    GUISystem::DrawSideBar(m_registry, &global_state, &reload_shaders);
+    auto stop = std::chrono::high_resolution_clock::now();
+    global_state.time_map["ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
+
+    start = std::chrono::high_resolution_clock::now();
+    RenderSystem::Render(windowManager, m_registry, fov, camera);
+    stop = std::chrono::high_resolution_clock::now();
+
+    global_state.time_map["Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
+    
+    start = std::chrono::high_resolution_clock::now();
 
     // Rendering
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    stop = std::chrono::high_resolution_clock::now();
+
+    global_state.time_map["ImGui Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
@@ -257,4 +274,34 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(yoffset);
+}
+
+void reload_shaders() {
+    std::cout << "Shaders Reloaded" << std::endl;
+    default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+    light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+}
+
+
+void test_performance_entities(entt::registry &m_registry, std::vector<float> &cube_vertices, int numObjects, float positionRange[2], float scaleRange[2]) {
+    // Test performance with entities:
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> randPosition(positionRange[0], positionRange[1]);
+    std::uniform_real_distribution<float> randRotation(0.0f, 3.0f);
+    std::uniform_real_distribution<float> randScale(scaleRange[0], scaleRange[1]);
+    std::uniform_real_distribution<float> randColor(0.0f, 1.0f);
+    std::uniform_real_distribution<float> randGravity(-10.0f, -1.0f);
+    for (int i = 0; i < numObjects; i++)
+    {
+        glm::vec3 position = glm::vec3(randPosition(generator), randPosition(generator), randPosition(generator));
+        glm::vec3 rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator));
+        glm::vec3 scale = glm::vec3(randScale(generator), randScale(generator), randScale(generator));
+        const auto cube_entity = m_registry.create();
+        m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
+        m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
+        m_registry.emplace<ModelData>(cube_entity, cube_vertices);
+        m_registry.emplace<RenderingData>(cube_entity, &default_shader, 
+            Material{glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
+        );
+    }
 }

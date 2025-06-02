@@ -8,6 +8,6 @@
 class RenderSystem {
     public:
         RenderSystem() = default;
-        void Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera);
-        void BindVertexArray(entt::registry &registry);
+        static void Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera);
+        static void BindVertexArray(entt::registry &registry);
 };

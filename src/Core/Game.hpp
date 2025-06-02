@@ -15,6 +15,4 @@ class Game {
         entt::registry m_registry;
 
         entt::dispatcher m_dispatcher;
-
-        RenderSystem renderSystem;
 };

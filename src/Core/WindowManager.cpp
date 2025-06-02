@@ -66,6 +66,9 @@ void WindowManager::Create(int width, int height, std::string windowName,
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
+    // Vsync (0 = off, 1 = on)
+    glfwSwapInterval(0);
+
     // IMGUI STUFF
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();

@@ -64,6 +64,7 @@ public:
         checkCompileErrors(fragment, "FRAGMENT");
         // shader Program
         ID = glCreateProgram();
+        std::cout << "Created Shader Program " << ID << std::endl;
         glAttachShader(ID, vertex);
         glAttachShader(ID, fragment);
         glLinkProgram(ID);
