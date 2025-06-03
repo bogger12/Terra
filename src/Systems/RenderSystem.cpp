@@ -51,7 +51,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     uint lastTextureID = 0;
     uint lastVAO = 0;
 
-
+    global_state.drawCalls = 0;
     for (auto entity: meshesView) {
 
         auto &transform = meshesView.get<Transform>(entity);
@@ -122,6 +122,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         // startGLRender = std::chrono::high_resolution_clock::now();
         if (differentVAO) glBindVertexArray(modelData.VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        global_state.drawCalls++;
         // stopGLRender = std::chrono::high_resolution_clock::now();
 
         // global_state.time_map["3 Texture Assign"] += std::chrono::duration_cast<std::chrono::microseconds>(stopAssignTexture - startAssignTexture).count()/1000.0f;

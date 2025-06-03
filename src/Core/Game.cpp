@@ -102,7 +102,7 @@ Game::Game(std::string windowName, const int w, const int h)
     };
 
     float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
-    test_performance_entities(m_registry, cube_vertices, 1000, positionRange, scaleRange);
+    test_performance_entities(m_registry, cube_vertices, 2000, positionRange, scaleRange);
 
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));

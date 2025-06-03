@@ -22,8 +22,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
     {
-        static float f = 0.0f;
-        static int counter = 0;
+        // static int counter = 0;
 
         static float windowWidth = 300.0f;
 
@@ -33,33 +32,35 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f)); // Window Bg Color
         ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.8f, 0.8f, 0.8f, 1.0f)); // Window Border Color
 
-        ImGui::Begin("Hello, world!", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
+        ImGui::Begin("SideBar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
         windowWidth = ImGui::GetWindowSize().x;
 
-        ImGui::Text("This is some useful text.");                       // Display some text (you can use a format strings too)
+        ImGui::Text("Terra Engine v0.0.1");                       // Display some text (you can use a format strings too)
+        ImGui::Dummy(ImVec2(0.0f, 20.0f));
         ImGui::Checkbox("Demo Window", &global_state->show_demo_window); // Edit bools storing our window open/close state
+        ImGui::ColorEdit3("Clear color", (float *)&global_state->clear_color); // Edit 3 floats representing a color
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);                          // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float *)&global_state->clear_color); // Edit 3 floats representing a color
-
-        if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
+        // if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
+        //     counter++;
+        // ImGui::SameLine();
+        // ImGui::Text("counter = %d", counter);
 
         if (ImGui::Button("Reload Shaders"))
         {
             reload_shaders();
         }
+        ImGui::Text("Draw Calls: %u", global_state->drawCalls);
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+        ImGui::Text("Average %.3f ms (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         for (auto const& [timer, time] : global_state->time_map)
         {
             ImGui::Text("%s : %.3f ms", timer.c_str(), time);
         }
-
+        ImGui::Dummy(ImVec2(0.0f, 10.0f));
+        ImGui::Text("Entities View");
+        ImGui::Spacing();
         auto allEntities = registry.view<entt::entity>();
-
         ImGui::BeginChild("Entities", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f));
 
         for (auto entity : allEntities) {
