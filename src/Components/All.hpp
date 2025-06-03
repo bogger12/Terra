@@ -6,11 +6,14 @@
 #include <shader.h>
 #include <vector>
 
-GlobalState global_state;
+
+// ------------------
+// Components
+// ------------------
 
 struct Transform {
     glm::vec3 position;
-    glm::quat rotation;
+    glm::mat4 rotation;
     glm::vec3 scale;
 };
 
@@ -39,4 +42,13 @@ struct Light {
     glm::vec3 diffuse = glm::vec3(0.5f, 0.5f, 0.5f); // darken diffuse light a bit
     glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
     // float intensity = 1; // unused
+
+    bool operator==(const Light& other)
+    {
+        return ambient == other.ambient && 
+            diffuse == other.diffuse && 
+            specular == other.specular;
+    }
+    bool operator!=(const Light& other) { return !(*this == other); }
+
 };

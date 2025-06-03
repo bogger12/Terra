@@ -6,6 +6,17 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+
+glm::vec3 ExtractEulerAngles(const glm::mat4& matrix) {
+    glm::quat q = glm::quat_cast(glm::mat3(matrix));
+    glm::vec3 euler = glm::eulerAngles(q);
+    return glm::degrees(euler);
+}
+glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
+    return glm::mat4_cast(glm::quat(glm::radians(euler)));
+}
+
 void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state, void (*reload_shaders)())
 {
     ImGuiIO &io = ImGui::GetIO();
@@ -59,7 +70,12 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                 // Transform
                 if (registry.any_of<Transform>(entity) && ImGui::TreeNode("Transform")) {
                     auto &transform = registry.get<Transform>(entity);
-                    ImGui::DragFloat3("Transform", glm::value_ptr(transform.position));
+                    ImGui::DragFloat3("Position", glm::value_ptr(transform.position));
+                    static glm::vec3 eulerRotation = ExtractEulerAngles(transform.rotation);
+                    if (ImGui::DragFloat3("Rotation", glm::value_ptr(eulerRotation))) {
+                        transform.rotation = EulerAnglesToMat4(eulerRotation);
+                    };
+                    ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale));
                     ImGui::TreePop();
                 }
                 
@@ -104,6 +120,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                         ImGui::ColorEdit3("Ambient", glm::value_ptr(renderingData.material.ambient));
                         ImGui::ColorEdit3("Diffuse", glm::value_ptr(renderingData.material.diffuse));
                         ImGui::ColorEdit3("Specular", glm::value_ptr(renderingData.material.specular));
+                        ImGui::DragFloat("Shininess", &renderingData.material.shininess);
                         ImGui::TreePop();
                     }
                     ImGui::TreePop();

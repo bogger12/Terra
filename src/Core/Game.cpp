@@ -10,6 +10,7 @@
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
 #include "../Systems/GUISystem.hpp"
+#include "Globals.hpp"
 
 #ifndef ASSET_DIR
 #define ASSET_DIR "../assets"
@@ -34,6 +35,8 @@ Camera camera;
 
 Shader default_shader;
 Shader light_source_shader;
+
+GlobalState global_state;
 
 
 Game::Game(std::string windowName, const int w, const int h)
@@ -99,10 +102,10 @@ Game::Game(std::string windowName, const int w, const int h)
     };
 
     float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
-    test_performance_entities(m_registry, cube_vertices, 5000, positionRange, scaleRange);
+    test_performance_entities(m_registry, cube_vertices, 1000, positionRange, scaleRange);
 
     // Assign component data to entities.
-    m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f, 1.0f, 1.0f));
+    m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
     m_registry.emplace<ModelData>(cube_entity, cube_vertices);
     m_registry.emplace<RenderingData>(cube_entity, &default_shader, 
@@ -111,7 +114,7 @@ Game::Game(std::string windowName, const int w, const int h)
 
 
     // Create light entity:
-    m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(0.1f, 0.1f, 0.1f));
+    m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     m_registry.emplace<ModelData>(light_entity, cube_vertices);
     m_registry.emplace<RenderingData>(light_entity, &light_source_shader);
     m_registry.emplace<Light>(light_entity, glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -211,13 +214,13 @@ void Game::Render()
 
     GUISystem::DrawSideBar(m_registry, &global_state, &reload_shaders);
     auto stop = std::chrono::high_resolution_clock::now();
-    global_state.time_map["ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
+    global_state.time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     start = std::chrono::high_resolution_clock::now();
     RenderSystem::Render(windowManager, m_registry, fov, camera);
     stop = std::chrono::high_resolution_clock::now();
 
-    global_state.time_map["Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
+    global_state.time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
     
     start = std::chrono::high_resolution_clock::now();
 
@@ -226,12 +229,15 @@ void Game::Render()
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     stop = std::chrono::high_resolution_clock::now();
 
-    global_state.time_map["ImGui Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
+    global_state.time_map["9 ImGui Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
+    // start = std::chrono::high_resolution_clock::now();
     glfwSwapBuffers(windowManager.GetWindow());
     glfwPollEvents();
+    stop = std::chrono::high_resolution_clock::now();
+    // global_state.time_map["0 Swap Buffers Poll Events"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -294,7 +300,7 @@ void test_performance_entities(entt::registry &m_registry, std::vector<float> &c
     for (int i = 0; i < numObjects; i++)
     {
         glm::vec3 position = glm::vec3(randPosition(generator), randPosition(generator), randPosition(generator));
-        glm::vec3 rotation = glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator));
+        glm::mat4 rotation = glm::mat4_cast(glm::quat(glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator))));
         glm::vec3 scale = glm::vec3(randScale(generator), randScale(generator), randScale(generator));
         const auto cube_entity = m_registry.create();
         m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
