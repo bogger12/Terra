@@ -1,8 +1,8 @@
 # Terra Engine
 #### Powered by OpenGL
 
-
-![alt text](https://github.com/bogger12/Terra/example-image "Example Image")
+##### The Engine In Action:
+![alt text](images/terra-example.png "Example Image")
 
 
 ## Libraries Used:
