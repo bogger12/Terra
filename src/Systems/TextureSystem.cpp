@@ -18,12 +18,11 @@ void TextureSystem::LoadTextures(entt::registry &registry)
         
         if (m.find(tex.texture_path) != m.end()) { // If exists in map
             td = m[tex.texture_path];
-            std::cout << "Texture already exists, using textureID " <<  td.textureID << std::endl;
+            // std::cout << "Texture already exists, using textureID " <<  td.textureID << std::endl;
         } else {
             td.textureID = LoadTextureFromPath(tex.texture_path, td.width, td.height, td.nrChannels, tex.internalFormat);
             m[tex.texture_path] = td;
-            std::cout << "creating textureID " <<  td.textureID << std::endl;
-
+            // std::cout << "creating textureID " <<  td.textureID << std::endl;
         }
         tex.textureID = td.textureID;
         tex.height = td.height; tex.width = td.width;
