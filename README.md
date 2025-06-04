@@ -24,7 +24,12 @@ To run the Engine
 cd build/bin
 ./Terra
 ```
-
+#### Controls:
+```
+WASD : Move Camera
+Mouse : Rotate Camera
+ESC : Enter/Exit Camera Mode
+```
 
 
 ## Libraries Used:

@@ -120,7 +120,7 @@ Game::Game(std::string windowName, const int w, const int h)
     m_registry.emplace<Light>(light_entity, glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     // Set Game Camera
-    camera = Camera();
+    camera = Camera(glm::vec3(0.0f,0.0f,3.0f));
 
     // Assign events to systems.
     // m_dispatcher.sink<KeyDown>().connect<&MoveSystem::on_key_down>(m_move_system);
