@@ -9,27 +9,26 @@
 The Engine build files are prepared with **CMake** and your chosen build tool (`make`, `ninja` etc) is used as for compilation. (This is currently mac-specific)
 
 To Clone
-```
+```bash
 git clone https://github.com/bogger12/Terra.git
 cd Terra
 ```
 To build with **CMake**
-```
+```bash
 cmake -S . -B build
 cmake --build build
 ```
 
 To run the Engine
-```
+```bash
 cd build/bin
 ./Terra
 ```
-#### Controls:
-```
-WASD : Move Camera
-Mouse : Rotate Camera
-ESC : Enter/Exit Camera Mode
-```
+## Controls:
+
+- **WASD** : *Move Camera*
+- **Mouse** : *Rotate Camera*
+- **TAB** : *Enter/Exit Camera Mode*
 
 
 ## Libraries Used:
