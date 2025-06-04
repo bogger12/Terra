@@ -64,19 +64,19 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         if (differentShader) renderingData.shader->use();
         
         // startAssignTexture = std::chrono::high_resolution_clock::now();
-        if (registry.any_of<Texture>(entity)) {
-            auto& texture = registry.get<Texture>(entity);
-            if (differentShader || lastTextureID != texture.textureID || lastTextureID == 0 ) {
+        // if (registry.any_of<Texture>(entity)) {
+        //     auto& texture = registry.get<Texture>(entity);
+        //     if (differentShader || lastTextureID != texture.textureID || lastTextureID == 0 ) {
 
-                // bind textures on corresponding texture units
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, texture.textureID);
+        //         // bind textures on corresponding texture units
+        //         glActiveTexture(GL_TEXTURE0);
+        //         glBindTexture(GL_TEXTURE_2D, texture.textureID);
 
-                renderingData.shader->setInt("texture1", 0); // Showing that 'texture1' uses GL_TEXTURE0
+        //         // renderingData.shader->setInt("texture1", 0); // Showing that 'texture1' uses GL_TEXTURE0
 
-            }
-            lastTextureID = texture.textureID;
-        }
+        //     }
+        //     lastTextureID = texture.textureID;
+        // }
         // stopAssignTexture = std::chrono::high_resolution_clock::now();
 
 
@@ -90,11 +90,13 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         }
         if (differentShader || lastMaterial != renderingData.material) {
             // for lighting stuff
-
             renderingData.shader->setVec3("objectColor", renderingData.material.albedo);
-
-            renderingData.shader->setVec3("material.ambient", renderingData.material.ambient);
-            renderingData.shader->setVec3("material.diffuse", renderingData.material.diffuse);
+            if (renderingData.material.diffuseMap != nullptr) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, renderingData.material.diffuseMap->textureID);
+                renderingData.shader->setInt("material.diffuse", 0);
+            }
+            // renderingData.shader->setVec3("material.diffuse", renderingData.material.diffuse);
             renderingData.shader->setVec3("material.specular", renderingData.material.specular);
             renderingData.shader->setFloat("material.shininess", renderingData.material.shininess);
         }
@@ -189,11 +191,13 @@ void RenderSystem::BindVertexArray(entt::registry &registry) {
         glBufferData(GL_ARRAY_BUFFER, modelData.vertices.size() * sizeof(float), &modelData.vertices[0], GL_STATIC_DRAW);
 
         // position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
         // normal attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
 
         m[modelHash] = {modelData.VAO, modelData.VBO };
 

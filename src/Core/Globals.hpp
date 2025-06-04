@@ -1,6 +1,9 @@
 #pragma once
 #include "imgui.h"
 #include <map>
+#include <shader.h>
+#include <vector>
+#include "../Components/Structures.hpp"
 
 struct GlobalState
 {
@@ -11,3 +14,11 @@ struct GlobalState
     std::map<std::string, float> time_map; 
 };
 extern GlobalState global_state;
+
+struct EngineData 
+{
+    // Engine Data
+    Shader shaders[32];
+    std::vector<Texture> textures;
+};
+extern EngineData engine_data;

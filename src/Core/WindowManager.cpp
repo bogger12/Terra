@@ -66,8 +66,7 @@ void WindowManager::Create(int width, int height, std::string windowName,
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
-    // Vsync (0 = off, 1 = on)
-    glfwSwapInterval(0);
+    ChangeVSync(true);
 
     // IMGUI STUFF
     // Setup Dear ImGui context
@@ -80,6 +79,11 @@ void WindowManager::Create(int width, int height, std::string windowName,
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
+}
+
+void WindowManager::ChangeVSync(bool useVSync) {
+    // Vsync (0 = off, 1 = on)
+    glfwSwapInterval(useVSync);
 }
 
 void WindowManager::OnKeyDown()

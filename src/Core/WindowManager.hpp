@@ -18,6 +18,7 @@ class WindowManager {
         void Close() noexcept;
         void OnKeyDown();
         void ChangeMouseMode(int value);
+        void ChangeVSync(bool);
 
     private:
         GLFWwindow* window;

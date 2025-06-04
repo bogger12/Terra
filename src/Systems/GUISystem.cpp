@@ -6,6 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+bool TextureNode(const char *label, Texture &texture);
 
 
 glm::vec3 ExtractEulerAngles(const glm::mat4& matrix) {
@@ -17,7 +18,7 @@ glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
     return glm::mat4_cast(glm::quat(glm::radians(euler)));
 }
 
-void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state, void (*reload_shaders)())
+void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)())
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
@@ -44,11 +45,12 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
         //     counter++;
         // ImGui::SameLine();
         // ImGui::Text("counter = %d", counter);
+        static bool vsyncOn = true;
+        std::string vSyncText = std::string("VSync: ") + (vsyncOn ? "On" : "Off");
+        if (ImGui::Button(vSyncText.c_str())) { vsyncOn = !vsyncOn; windowManager.ChangeVSync(vsyncOn); };
 
-        if (ImGui::Button("Reload Shaders"))
-        {
-            reload_shaders();
-        }
+        if (ImGui::Button("Reload Shaders")) reload_shaders(); 
+
         ImGui::Text("Draw Calls: %u", global_state->drawCalls);
 
 
@@ -79,22 +81,6 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                     ImGui::DragFloat3("Scale", glm::value_ptr(transform.scale));
                     ImGui::TreePop();
                 }
-                
-
-                // Texture
-                if (registry.any_of<Texture>(entity) && ImGui::TreeNode("Texture"))
-                {
-                    auto &texture = registry.get<Texture>(entity);
-                    if (ImGui::InputText("Path", &texture.texture_path)) {
-                        TextureSystem::LoadTextures(registry); // Reload on path change
-                    };
-                    ImGui::Text("size = %d x %d", texture.width, texture.height);
-                    ImGui::Text("textureID: %u", texture.textureID);
-                    float aspect = (float)texture.width / (float)texture.height;
-                    ImGui::Image((ImTextureID)(intptr_t)texture.textureID, ImVec2(100.0f * aspect, 100.0f), {0, 1}, {1, 0});
-
-                    ImGui::TreePop();
-                }
 
                 // ModelData
                 if (registry.any_of<ModelData>(entity) && ImGui::TreeNode("ModelData"))
@@ -118,8 +104,10 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                     ImGui::Text("Shader ID: %u", renderingData.shader->ID);
                     if (ImGui::TreeNode("Material")) {
                         ImGui::ColorEdit3("Albedo", glm::value_ptr(renderingData.material.albedo));
-                        ImGui::ColorEdit3("Ambient", glm::value_ptr(renderingData.material.ambient));
                         ImGui::ColorEdit3("Diffuse", glm::value_ptr(renderingData.material.diffuse));
+                        if (TextureNode("Diffuse Texture", *renderingData.material.diffuseMap)) {
+                            TextureSystem::LoadTextures(engine_data->textures); // Reload on path change
+                        };
                         ImGui::ColorEdit3("Specular", glm::value_ptr(renderingData.material.specular));
                         ImGui::DragFloat("Shininess", &renderingData.material.shininess);
                         ImGui::TreePop();
@@ -153,4 +141,25 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
     }
-}
+};
+
+
+bool TextureNode(const char *label, Texture &texture) {
+    Texture initTexture = texture;
+    if (ImGui::TreeNode(label))
+    {
+        ImGui::InputText("Path", &texture.texture_path);
+        ImGui::Text("size = %d x %d", texture.width, texture.height);
+        ImGui::Text("textureID: %u", texture.textureID);
+        if (ImGui::TreeNode("Color Mode")) {
+            if (ImGui::Selectable("GL_RGB", texture.internalFormat==GL_RGB)) { texture.internalFormat = GL_RGB; }
+            if (ImGui::Selectable("GL_RGBA", texture.internalFormat==GL_RGBA)) { texture.internalFormat = GL_RGBA; }
+            ImGui::TreePop();
+        }
+        float aspect = (float)texture.width / (float)texture.height;
+        ImGui::Image((ImTextureID)(intptr_t)texture.textureID, ImVec2(100.0f * aspect, 100.0f), {0, 1}, {1, 0});
+
+        ImGui::TreePop();
+    }
+    return (initTexture != texture); 
+};

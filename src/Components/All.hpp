@@ -17,15 +17,6 @@ struct Transform {
     glm::vec3 scale;
 };
 
-struct Texture {
-    std::string texture_path;
-    GLint internalFormat = GL_RGB;
-    unsigned int textureID = 0;
-    int height = 0;
-    int width = 0; 
-    int nrChannels = 0;
-};
-
 struct ModelData {
     std::vector<float> vertices;
     // std::vector<unsigned int> indices;

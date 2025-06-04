@@ -33,10 +33,8 @@ bool useMouse = true;
 
 Camera camera;
 
-Shader default_shader;
-Shader light_source_shader;
-
 GlobalState global_state;
+EngineData engine_data;
 
 
 Game::Game(std::string windowName, const int w, const int h)
@@ -46,7 +44,14 @@ Game::Game(std::string windowName, const int w, const int h)
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    reload_shaders();
+    Shader default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
+    Shader light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+    engine_data.shaders[0] = default_shader;
+    engine_data.shaders[1] = light_source_shader;
+    Texture container1 = Texture{ASSET_DIR "/textures/container.jpg", GL_RGB};
+    Texture container2 = Texture{ASSET_DIR "/textures/container2.png", GL_RGBA};
+    Texture awesomeface = Texture{ASSET_DIR "/textures/awesomeface.png", GL_RGBA};
+    engine_data.textures = {container1, container2, awesomeface};
 
     const auto cube_entity = m_registry.create();
     // const auto cube_entity2 = m_registry.create();
@@ -58,47 +63,48 @@ Game::Game(std::string windowName, const int w, const int h)
     // unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
 
     std::vector<float> cube_vertices = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
+        // positions          // normals           // texture coords
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
 
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
     float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
@@ -106,17 +112,23 @@ Game::Game(std::string windowName, const int w, const int h)
 
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
+    // m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
     m_registry.emplace<ModelData>(cube_entity, cube_vertices);
-    m_registry.emplace<RenderingData>(cube_entity, &default_shader, 
-        Material{glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
+    m_registry.emplace<RenderingData>(cube_entity, &engine_data.shaders[0], 
+        Material{
+            glm::vec3(1.0f, 0.5f, 0.31f), // Albedo
+            &engine_data.textures[1], // Container 2
+            glm::vec3(1.0f, 0.5f, 0.31f), // Diffuse
+            glm::vec3(0.5f, 0.5f, 0.5f), // Specular
+            32.0f // Shininess
+        }
     );
 
 
     // Create light entity:
     m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     m_registry.emplace<ModelData>(light_entity, cube_vertices);
-    m_registry.emplace<RenderingData>(light_entity, &light_source_shader);
+    m_registry.emplace<RenderingData>(light_entity, &engine_data.shaders[1]);
     m_registry.emplace<Light>(light_entity, glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
 
     // Set Game Camera
@@ -139,7 +151,7 @@ const int Game::Run()
     float lastFrame = 0.0f;
 
     RenderSystem::BindVertexArray(m_registry);
-    TextureSystem::LoadTextures(m_registry);
+    TextureSystem::LoadTextures(engine_data.textures);
 
     GLFWwindow *window = windowManager.GetWindow();
     while (!glfwWindowShouldClose(window))
@@ -212,7 +224,7 @@ void Game::Render()
     ImGui::NewFrame();
     if (global_state.show_demo_window) ImGui::ShowDemoWindow(); // Show demo window! :)
 
-    GUISystem::DrawSideBar(m_registry, &global_state, &reload_shaders);
+    GUISystem::DrawSideBar(m_registry, &global_state, &engine_data, windowManager, &reload_shaders);
     auto stop = std::chrono::high_resolution_clock::now();
     global_state.time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
@@ -284,8 +296,9 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 
 void reload_shaders() {
     std::cout << "Shaders Reloaded" << std::endl;
-    default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
-    light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
+    for (Shader shader : engine_data.shaders) {
+        shader.load();
+    };
 }
 
 
@@ -304,10 +317,9 @@ void test_performance_entities(entt::registry &m_registry, std::vector<float> &c
         glm::vec3 scale = glm::vec3(randScale(generator), randScale(generator), randScale(generator));
         const auto cube_entity = m_registry.create();
         m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
-        m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
         m_registry.emplace<ModelData>(cube_entity, cube_vertices);
-        m_registry.emplace<RenderingData>(cube_entity, &default_shader, 
-            Material{glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
+        m_registry.emplace<RenderingData>(cube_entity, &engine_data.shaders[0], 
+            Material{glm::vec3(1.0f, 0.5f, 0.31f), &engine_data.textures[1], glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
         );
     }
 }

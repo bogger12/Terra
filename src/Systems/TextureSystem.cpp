@@ -1,33 +1,19 @@
 #include <unordered_map>
 #include "TextureSystem.hpp"
-#include "../Components/All.hpp"
 
 struct TextureDescriptor {
-    unsigned int textureID;
+    unsigned int textureID = 0;
+    GLint internalFormat;
     int width = 0, height = 0, nrChannels = 0;
 };
 
-void TextureSystem::LoadTextures(entt::registry &registry)
+void TextureSystem::LoadTextures(std::vector<Texture> &textures)
 {
-    std::unordered_map<std::string, TextureDescriptor> m;
-    
-    auto textures = registry.view<Texture>();
-
-    textures.each([&](Texture &tex) {
-        TextureDescriptor td;
-        
-        if (m.find(tex.texture_path) != m.end()) { // If exists in map
-            td = m[tex.texture_path];
-            // std::cout << "Texture already exists, using textureID " <<  td.textureID << std::endl;
-        } else {
-            td.textureID = LoadTextureFromPath(tex.texture_path, td.width, td.height, td.nrChannels, tex.internalFormat);
-            m[tex.texture_path] = td;
-            // std::cout << "creating textureID " <<  td.textureID << std::endl;
-        }
-        tex.textureID = td.textureID;
-        tex.height = td.height; tex.width = td.width;
-        tex.nrChannels = td.nrChannels;
-    });
+    for (auto& tex : textures) {
+        glDeleteTextures(1, &tex.textureID);
+        tex.textureID = LoadTextureFromPath(tex.texture_path, tex.width, tex.height, tex.nrChannels, tex.internalFormat);
+        std::cout << "Created texture ID " << tex.textureID << std::endl;
+    }
 }
 
 unsigned int LoadTextureFromPath(std::string texture_path, int &width, int &height, int &nrChannels, GLint internalFormat)
