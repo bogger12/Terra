@@ -5,6 +5,28 @@
 ![alt text](images/terra-example.png "Example Image")
 
 
+## Installation:
+The Engine build files are prepared with **CMake** and your chosen build tool (`make`, `ninja` etc) is used as for compilation. (This is currently mac-specific)
+
+To Clone
+```
+git clone https://github.com/bogger12/Terra.git
+cd Terra
+```
+To build with **CMake**
+```
+cmake -S . -B build
+cmake --build build
+```
+
+To run the Engine
+```
+cd build/bin
+./Terra
+```
+
+
+
 ## Libraries Used:
 GLFW3 - Window Management
 
