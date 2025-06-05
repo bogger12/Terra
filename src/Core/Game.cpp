@@ -50,8 +50,9 @@ Game::Game(std::string windowName, const int w, const int h)
     engine_data.shaders[1] = light_source_shader;
     Texture container1 = Texture{ASSET_DIR "/textures/container.jpg", GL_RGB};
     Texture container2 = Texture{ASSET_DIR "/textures/container2.png", GL_RGBA};
+    Texture container2_specular = Texture{ASSET_DIR "/textures/container2_specular.png", GL_RGBA};
     Texture awesomeface = Texture{ASSET_DIR "/textures/awesomeface.png", GL_RGBA};
-    engine_data.textures = {container1, container2, awesomeface};
+    engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
     const auto cube_entity = m_registry.create();
     // const auto cube_entity2 = m_registry.create();
@@ -119,6 +120,7 @@ Game::Game(std::string windowName, const int w, const int h)
             glm::vec3(1.0f, 0.5f, 0.31f), // Albedo
             &engine_data.textures[1], // Container 2
             glm::vec3(1.0f, 0.5f, 0.31f), // Diffuse
+            &engine_data.textures[2], // Specular
             glm::vec3(0.5f, 0.5f, 0.5f), // Specular
             32.0f // Shininess
         }
@@ -319,7 +321,7 @@ void test_performance_entities(entt::registry &m_registry, std::vector<float> &c
         m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
         m_registry.emplace<ModelData>(cube_entity, cube_vertices);
         m_registry.emplace<RenderingData>(cube_entity, &engine_data.shaders[0], 
-            Material{glm::vec3(1.0f, 0.5f, 0.31f), &engine_data.textures[1], glm::vec3(1.0f, 0.5f, 0.31f), glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
+            Material{glm::vec3(1.0f, 0.5f, 0.31f), &engine_data.textures[1], glm::vec3(1.0f, 0.5f, 0.31f), &engine_data.textures[2], glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
         );
     }
 }

@@ -109,6 +109,9 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                             TextureSystem::LoadTextures(engine_data->textures); // Reload on path change
                         };
                         ImGui::ColorEdit3("Specular", glm::value_ptr(renderingData.material.specular));
+                        if (TextureNode("Specular Texture", *renderingData.material.specularMap)) {
+                            TextureSystem::LoadTextures(engine_data->textures); // Reload on path change
+                        };
                         ImGui::DragFloat("Shininess", &renderingData.material.shininess);
                         ImGui::TreePop();
                     }

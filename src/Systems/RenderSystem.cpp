@@ -89,15 +89,23 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
             renderingData.shader->setMat4("view", viewMatrix);
         }
         if (differentShader || lastMaterial != renderingData.material) {
+            uint numTexturesUsed = 0;
             // for lighting stuff
             renderingData.shader->setVec3("objectColor", renderingData.material.albedo);
             if (renderingData.material.diffuseMap != nullptr) {
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(GL_TEXTURE0+numTexturesUsed);
                 glBindTexture(GL_TEXTURE_2D, renderingData.material.diffuseMap->textureID);
-                renderingData.shader->setInt("material.diffuse", 0);
+                renderingData.shader->setInt("material.diffuse", numTexturesUsed);
+                numTexturesUsed++;
             }
             // renderingData.shader->setVec3("material.diffuse", renderingData.material.diffuse);
-            renderingData.shader->setVec3("material.specular", renderingData.material.specular);
+            if (renderingData.material.specularMap != nullptr) {
+                glActiveTexture(GL_TEXTURE0+numTexturesUsed);
+                glBindTexture(GL_TEXTURE_2D, renderingData.material.specularMap->textureID);
+                renderingData.shader->setInt("material.specular", numTexturesUsed);
+                numTexturesUsed++;
+            }
+            // renderingData.shader->setVec3("material.specular", renderingData.material.specular);
             renderingData.shader->setFloat("material.shininess", renderingData.material.shininess);
         }
         if (differentShader || lastLight != light1) {
