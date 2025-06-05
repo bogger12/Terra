@@ -12,19 +12,15 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
     // start = std::chrono::high_resolution_clock::now();
     auto meshesView = registry.view<Transform, ModelData, RenderingData>();
-    auto lightsView = registry.view<Transform, Light>();
+    auto lightsView = registry.view<Transform, LightTag>();
     // stop = std::chrono::high_resolution_clock::now();
     // global_state.time_map["2 Create Mesh and Light Views"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     // start = std::chrono::high_resolution_clock::now();
-    Light light1;
-    glm::vec3 light1Position;
 
-    lightsView.each([&](auto& transform, auto& light) {
+    lightsView.each([&](auto& transform) {
         float time = glfwGetTime();
         transform.position = glm::vec3(sin(time), transform.position.y, cos(time));
-        light1 = light;
-        light1Position = transform.position;
     });
 
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
@@ -46,9 +42,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     
 
     Material lastMaterial; 
-    Light lastLight; 
     Shader* lastShader = nullptr; 
-    uint lastTextureID = 0;
     uint lastVAO = 0;
 
     global_state.drawCalls = 0;
@@ -108,11 +102,18 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
             // renderingData.shader->setVec3("material.specular", renderingData.material.specular);
             renderingData.shader->setFloat("material.shininess", renderingData.material.shininess);
         }
-        if (differentShader || lastLight != light1) {
-            renderingData.shader->setVec3("light.ambient", light1.ambient);
-            renderingData.shader->setVec3("light.diffuse", light1.diffuse);
-            renderingData.shader->setVec3("light.specular", light1.specular);
-            renderingData.shader->setVec3("light.position", light1Position);
+        if (differentShader) {
+            // renderingData.shader->setVec4("light.vector", glm::vec4(camera.Position, 0.0f));
+            // light1.SetShaderValues(renderingData.shader, light1Position);
+            int pointLightCount = 0; int spotLightCount = 0;
+            for (auto entity : lightsView) {
+                Transform &transform = registry.get<Transform>(entity);
+                if (PointLight *p = registry.try_get<PointLight>(entity)) p->SetShaderValues(renderingData.shader, transform.position, pointLightCount++);
+                else if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) d->SetShaderValues(renderingData.shader, transform.position);
+                else if (SpotLight *s = registry.try_get<SpotLight>(entity)) s->SetShaderValues(renderingData.shader, transform.position, spotLightCount++);
+            }
+            renderingData.shader->setInt("numPointLights", pointLightCount);
+            renderingData.shader->setInt("numSpotLights", spotLightCount);
         }
 
         
@@ -141,7 +142,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         // global_state.time_map["6 OpenGL Rendering Triangles"] += std::chrono::duration_cast<std::chrono::microseconds>(stopGLRender - startGLRender).count()/1000.0f;
 
         lastMaterial = renderingData.material;
-        lastLight = light1;
         lastShader = renderingData.shader;
         lastVAO = modelData.VAO;
     };

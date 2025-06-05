@@ -118,19 +118,19 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                     ImGui::TreePop();
                 }
 
-                // Light
-                if (registry.any_of<Light>(entity) && ImGui::TreeNode("Light"))
-                {
-                    auto &light = registry.get<Light>(entity);
+                // // Light
+                // if (registry.any_of<Light>(entity) && ImGui::TreeNode("Light"))
+                // {
+                //     auto &light = registry.get<Light>(entity);
 
-                    if (ImGui::TreeNode("Light Material")) {
-                        ImGui::ColorEdit3("Ambient", glm::value_ptr(light.ambient));
-                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(light.diffuse));
-                        ImGui::ColorEdit3("Specular", glm::value_ptr(light.specular));
-                        ImGui::TreePop();
-                    }
-                    ImGui::TreePop();
-                }
+                //     if (ImGui::TreeNode("Light Material")) {
+                //         ImGui::ColorEdit3("Ambient", glm::value_ptr(light.ambient));
+                //         ImGui::ColorEdit3("Diffuse", glm::value_ptr(light.diffuse));
+                //         ImGui::ColorEdit3("Specular", glm::value_ptr(light.specular));
+                //         ImGui::TreePop();
+                //     }
+                //     ImGui::TreePop();
+                // }
 
                 ImGui::TreePop();
             }

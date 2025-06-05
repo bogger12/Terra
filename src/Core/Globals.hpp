@@ -18,7 +18,7 @@ extern GlobalState global_state;
 struct EngineData 
 {
     // Engine Data
-    Shader shaders[32];
+    std::vector<Shader> shaders;
     std::vector<Texture> textures;
 };
 extern EngineData engine_data;

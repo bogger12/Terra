@@ -44,19 +44,15 @@ Game::Game(std::string windowName, const int w, const int h)
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    Shader default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
-    Shader light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
-    engine_data.shaders[0] = default_shader;
-    engine_data.shaders[1] = light_source_shader;
+    Shader default_shader = Shader(ASSET_DIR "/shaders/vert_lit.vert", ASSET_DIR "/shaders/frag_lit.frag");
+    Shader light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.vert", ASSET_DIR "/shaders/frag_light.frag");
+    engine_data.shaders = {default_shader, light_source_shader};
     Texture container1 = Texture{ASSET_DIR "/textures/container.jpg", GL_RGB};
     Texture container2 = Texture{ASSET_DIR "/textures/container2.png", GL_RGBA};
     Texture container2_specular = Texture{ASSET_DIR "/textures/container2_specular.png", GL_RGBA};
     Texture awesomeface = Texture{ASSET_DIR "/textures/awesomeface.png", GL_RGBA};
     engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
-    const auto cube_entity = m_registry.create();
-    // const auto cube_entity2 = m_registry.create();
-    const auto light_entity = m_registry.create();
 
     std::filesystem::path cwd = std::filesystem::current_path();
     std::cout << "Current working directory: " << cwd << std::endl;
@@ -111,6 +107,7 @@ Game::Game(std::string windowName, const int w, const int h)
     float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
     test_performance_entities(m_registry, cube_vertices, 2000, positionRange, scaleRange);
 
+    const auto cube_entity = m_registry.create();
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
@@ -126,12 +123,43 @@ Game::Game(std::string windowName, const int w, const int h)
         }
     );
 
-
+    const auto light_entity = m_registry.create();
     // Create light entity:
     m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     m_registry.emplace<ModelData>(light_entity, cube_vertices);
     m_registry.emplace<RenderingData>(light_entity, &engine_data.shaders[1]);
-    m_registry.emplace<Light>(light_entity, glm::vec3(0.2f, 0.2f, 0.2f), glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+    m_registry.emplace<PointLight>(light_entity, 
+        glm::vec3(0.2f, 0.2f, 0.2f), 
+        glm::vec3(0.5f, 0.5f, 0.5f), 
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        1.0f, 0.09f, 0.032f
+    );
+    m_registry.emplace<LightTag>(light_entity);
+
+    const auto light_entity2 = m_registry.create();
+    m_registry.emplace<Transform>(light_entity2, glm::vec3(1.2f, -1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    m_registry.emplace<ModelData>(light_entity2, cube_vertices);
+    m_registry.emplace<RenderingData>(light_entity2, &engine_data.shaders[1]);
+    m_registry.emplace<PointLight>(light_entity2, 
+        glm::vec3(0.2f, 0.2f, 0.2f), 
+        glm::vec3(0.5f, 0.5f, 0.5f), 
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        1.0f, 0.09f, 0.032f
+    );
+    m_registry.emplace<LightTag>(light_entity2);
+
+    const auto light_entity3 = m_registry.create();
+    m_registry.emplace<Transform>(light_entity3, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    m_registry.emplace<ModelData>(light_entity3, cube_vertices);
+    m_registry.emplace<RenderingData>(light_entity3, &engine_data.shaders[1]);
+    m_registry.emplace<SpotLight>(light_entity3, 
+        glm::vec3(0.2f, 0.2f, 0.2f), 
+        glm::vec3(0.5f, 0.5f, 0.5f), 
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec3(-5.0f, 0.0f, 2.0f),
+        12.5f, 17.5f
+    );
+    m_registry.emplace<LightTag>(light_entity3);
 
     // Set Game Camera
     camera = Camera(glm::vec3(0.0f,0.0f,3.0f));
@@ -298,7 +326,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 
 void reload_shaders() {
     std::cout << "Shaders Reloaded" << std::endl;
-    for (Shader shader : engine_data.shaders) {
+    for (Shader &shader : engine_data.shaders) {
         shader.load();
     };
 }

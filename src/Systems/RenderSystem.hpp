@@ -2,6 +2,7 @@
 
 #include "../Core/WindowManager.hpp"
 #include "../Components/All.hpp"
+#include "../Components/Lights.hpp"
 #include <entt/entt.hpp>
 #include <camera.h>
 

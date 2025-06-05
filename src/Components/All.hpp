@@ -27,19 +27,3 @@ struct RenderingData {
     Shader *shader;
     Material material;
 };
-
-struct Light {
-    glm::vec3 ambient = glm::vec3(0.2f, 0.2f, 0.2f);
-    glm::vec3 diffuse = glm::vec3(0.5f, 0.5f, 0.5f); // darken diffuse light a bit
-    glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
-    // float intensity = 1; // unused
-
-    bool operator==(const Light& other)
-    {
-        return ambient == other.ambient && 
-            diffuse == other.diffuse && 
-            specular == other.specular;
-    }
-    bool operator!=(const Light& other) { return !(*this == other); }
-
-};
