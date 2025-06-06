@@ -3,6 +3,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "OSMethods.hpp"
 #include "Game.hpp"
 #include "../Components/All.hpp"
 #include "../Events/KeyDown.hpp"
@@ -12,9 +13,6 @@
 #include "../Systems/GUISystem.hpp"
 #include "Globals.hpp"
 
-#ifndef ASSET_DIR
-#define ASSET_DIR "../assets"
-#endif
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
@@ -44,20 +42,22 @@ Game::Game(std::string windowName, const int w, const int h)
     // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
     // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
 
-    Shader default_shader = Shader(ASSET_DIR "/shaders/vert_lit.vert", ASSET_DIR "/shaders/frag_lit.frag");
-    Shader light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.vert", ASSET_DIR "/shaders/frag_light.frag");
+    Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
+    Shader light_source_shader = Shader(asset("/shaders/vert_light.vert"), asset("/shaders/frag_light.frag"));
     engine_data.shaders = {default_shader, light_source_shader};
-    Texture container1 = Texture{ASSET_DIR "/textures/container.jpg", GL_RGB};
-    Texture container2 = Texture{ASSET_DIR "/textures/container2.png", GL_RGBA};
-    Texture container2_specular = Texture{ASSET_DIR "/textures/container2_specular.png", GL_RGBA};
-    Texture awesomeface = Texture{ASSET_DIR "/textures/awesomeface.png", GL_RGBA};
+    Texture container1 = Texture{asset("/textures/container.jpg"), GL_RGB};
+    Texture container2 = Texture{asset("/textures/container2.png"), GL_RGBA};
+    Texture container2_specular = Texture{asset("/textures/container2_specular.png"), GL_RGBA};
+    Texture awesomeface = Texture{asset("/textures/awesomeface.png"), GL_RGBA};
     engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
 
     std::filesystem::path cwd = std::filesystem::current_path();
+    std::filesystem::path pd = getExecutableDir();
     std::cout << "Current working directory: " << cwd << std::endl;
+    std::cout << "Executable directory: " << pd << std::endl;
     std::cout << "Asset directory: " << ASSET_DIR << std::endl;
-    // unsigned int textureID = LoadTextureFromPath(ASSET_DIR "/textures/awesomeface.png", width, height, nrChannels, GL_RGBA);
+    std::cout << "Shader test: " << asset("/shaders/vert_lit.vert") << std::endl;
 
     std::vector<float> cube_vertices = {
         // positions          // normals           // texture coords
@@ -110,7 +110,6 @@ Game::Game(std::string windowName, const int w, const int h)
     const auto cube_entity = m_registry.create();
     // Assign component data to entities.
     m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    // m_registry.emplace<Texture>(cube_entity, ASSET_DIR "/textures/awesomeface.png", GL_RGBA);
     m_registry.emplace<ModelData>(cube_entity, cube_vertices);
     m_registry.emplace<RenderingData>(cube_entity, &engine_data.shaders[0], 
         Material{
@@ -233,12 +232,6 @@ void Game::Events(float deltaTime)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    // if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-    // {
-    //     std::cout << "Shaders Reloaded" << std::endl;
-    //     default_shader = Shader(ASSET_DIR "/shaders/vert_lit.glsl", ASSET_DIR "/shaders/frag_lit.glsl");
-    //     light_source_shader = Shader(ASSET_DIR "/shaders/vert_light.glsl", ASSET_DIR "/shaders/frag_light.glsl");
-    // }
 }
 
 void Game::Render()
