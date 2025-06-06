@@ -7,10 +7,10 @@ project(Terra VERSION 1.0
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 find_package(OpenGL REQUIRED)
-find_package(GLFW REQUIRED)
+find_package(GLFW3 REQUIRED)
 
-# message(STATUS "GLFW_LIBRARIES: ${GLFW_LIBRARIES}")
-# message(STATUS "GLFW_INCLUDE_DIRS: ${GLFW_INCLUDE_DIRS}")
+message(STATUS "GLFW3_LIBRARY: ${GLFW3_LIBRARY}")
+message(STATUS "GLFW3_INCLUDE_DIR: ${GLFW3_INCLUDE_DIR}")
 
 
 # Set the output directory
@@ -31,12 +31,12 @@ set_property(TARGET Terra PROPERTY CXX_STANDARD 17)
 file(COPY "${CMAKE_SOURCE_DIR}/src/assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Set include directories for libraries
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW_INCLUDE_DIRS})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW_LIBRARIES})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY})
 
 # Link these libraries to the target
 target_link_libraries(Terra PRIVATE
-    ${GLFW_LIBRARIES}
+    ${GLFW3_LIBRARY}
     OpenGL::GL
     # "-framework Cocoa"
     # "-framework IOKit"
@@ -47,6 +47,6 @@ target_link_libraries(Terra PRIVATE
 # Copy libglfw.dylib next to your binary at runtime
 add_custom_command(TARGET Terra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${GLFW_LIBRARIES}
+        ${GLFW3_LIBRARY}
         $<TARGET_FILE_DIR:Terra>
 )
