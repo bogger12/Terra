@@ -7,7 +7,6 @@
 
 #include <string>
 #include <iostream>
-#include <filesystem>
 #include <entt/entt.hpp>
 
 class TextureSystem {

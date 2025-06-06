@@ -1,5 +1,11 @@
 #include <filesystem>
+#ifdef _WIN32
+#include <libloaderapi.h>
+#elif __APPLE__
 #include <mach-o/dyld.h>
+#elif __linux__
+#include <unistd.h>
+#endif
 #include <string>
 
 #ifndef ASSET_DIR

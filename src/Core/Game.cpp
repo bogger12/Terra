@@ -2,6 +2,9 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "OSMethods.hpp"
 #include "Game.hpp"
