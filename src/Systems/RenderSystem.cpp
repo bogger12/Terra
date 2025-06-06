@@ -43,7 +43,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
     Material lastMaterial; 
     Shader* lastShader = nullptr; 
-    uint lastVAO = 0;
+    unsigned int lastVAO = 0;
 
     global_state.drawCalls = 0;
     for (auto entity: meshesView) {
@@ -83,7 +83,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
             renderingData.shader->setMat4("view", viewMatrix);
         }
         if (differentShader || lastMaterial != renderingData.material) {
-            uint numTexturesUsed = 0;
+            unsigned int numTexturesUsed = 0;
             // for lighting stuff
             renderingData.shader->setVec3("objectColor", renderingData.material.albedo);
             if (renderingData.material.diffuseMap != nullptr) {

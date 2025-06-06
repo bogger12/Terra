@@ -28,6 +28,7 @@ set( _glfw3_LIB_SEARCH_DIRS
 	"${PROJECT_SOURCE_DIR}/lib"
 	"C:/Program Files (x86)/glfw/lib-msvc110" 
 )
+message(${PROJECT_SOURCE_DIR})
 
 # Check environment for root search directory
 set( _glfw3_ENV_ROOT $ENV{GLFW3_ROOT} )
@@ -45,15 +46,13 @@ endif()
 FIND_PATH(
 	GLFW3_INCLUDE_DIR "GLFW/glfw3.h"
 	PATHS ${_glfw3_HEADER_SEARCH_DIRS} 
-	NO_DEFAULT_PATH
 )
 
 # Search for the library
 FIND_LIBRARY(
 	GLFW3_LIBRARY NAMES glfw3 glfw
 	PATHS ${_glfw3_LIB_SEARCH_DIRS} 
-	NO_DEFAULT_PATH
 )
 INCLUDE(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GLFW3 DEFAULT_MSG
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(GLFW3 DEFAULT_MSG
 GLFW3_LIBRARY GLFW3_INCLUDE_DIR)
