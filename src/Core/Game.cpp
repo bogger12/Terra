@@ -67,7 +67,8 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/vert_light.vert"), asset("/shaders/frag_light.frag"));
-    state->engine_data.shaders = {default_shader, light_source_shader};
+    Shader model_shader = Shader(asset("/shaders/model_loading.vert"), asset("/shaders/model_loading.frag"));
+    state->engine_data.shaders = {default_shader, light_source_shader, model_shader};
     MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
     MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
@@ -132,7 +133,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     const auto cube_entity = state->m_registry.create();
     // Assign component data to entities.
-    state->m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, -2.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelData>(cube_entity, cube_vertices);
     state->m_registry.emplace<RenderingData>(cube_entity, &state->engine_data.shaders[0], 
         Material{
@@ -183,6 +184,13 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     );
     state->m_registry.emplace<LightTag>(light_entity3);
 
+    Model backpack = Model(asset("/models/backpack/backpack.obj"));
+    const auto model_test_entity = state->m_registry.create();
+    state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
+
+
+
     // Set Game Camera
     state->camera = Camera(glm::vec3(0.0f,0.0f,3.0f));
 
@@ -209,9 +217,6 @@ const int Game::Run(ImGuiContext *hostContext)
     RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     TextureSystem::LoadTextures(state->engine_data.textures);
 
-    Model backpack = Model(asset("/models/backpack/backpack.obj"));
-
-
 
     while (!glfwWindowShouldClose(window))
     {
@@ -224,7 +229,7 @@ const int Game::Run(ImGuiContext *hostContext)
         int reloaded = Events(deltaTime);
 
         // Update();
-        Render(backpack);
+        Render();
         if (reloaded) {
             Shutdown();
             return 0;
@@ -274,7 +279,7 @@ int Game::Events(float deltaTime)
     return 0;
 }
 
-void Game::Render(Model &model)
+void Game::Render()
 {
     // render
     // ------
@@ -294,7 +299,6 @@ void Game::Render(Model &model)
 
     start = std::chrono::high_resolution_clock::now();
     RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
-    // model.Draw(state->engine_data.shaders[1]);
     stop = std::chrono::high_resolution_clock::now();
 
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;

@@ -212,6 +212,7 @@ inline unsigned int TextureFromFile(const char *path, const std::string &directo
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded textures on the y-axis.
     int width, height, nrComponents;
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
     if (data)

@@ -40,6 +40,24 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     // global_state.time_map["5 Calculate Shader Matrices"] = 0.0f;
     // global_state.time_map["6 OpenGL Rendering Triangles"] = 0.0f;
     
+    auto modelsView = registry.view<Transform, ModelWrapper>();
+    modelsView.each([&](auto& transform, auto& modelWrapper) {
+        // auto &transform = meshesView.get<Transform>(entity);
+        // auto &modelWrapper = meshesView.get<ModelWrapper>(entity);
+        Shader *currentShader = &state->engine_data.shaders[0];
+        glUseProgram(currentShader->ID);
+        // currentShader->setVec3("viewPos", camera.Position);
+        // pass projection matrix to shader (note that in this case it could change every frame)
+        currentShader->setMat4("projection", projectionMatrix);
+        // camera/view transformation
+        currentShader->setMat4("view", viewMatrix);
+
+        glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        currentShader->setMat4("model", modelMatrix);
+
+        modelWrapper.model.Draw(*currentShader);
+    });
+
 
     Material lastMaterial; 
     Shader* lastShader = nullptr; 
@@ -56,22 +74,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
         // activate shader
         if (differentShader) renderingData.shader->use();
-        
-        // startAssignTexture = std::chrono::high_resolution_clock::now();
-        // if (registry.any_of<Texture>(entity)) {
-        //     auto& texture = registry.get<Texture>(entity);
-        //     if (differentShader || lastTextureID != texture.textureID || lastTextureID == 0 ) {
-
-        //         // bind textures on corresponding texture units
-        //         glActiveTexture(GL_TEXTURE0);
-        //         glBindTexture(GL_TEXTURE_2D, texture.textureID);
-
-        //         // renderingData.shader->setInt("texture1", 0); // Showing that 'texture1' uses GL_TEXTURE0
-
-        //     }
-        //     lastTextureID = texture.textureID;
-        // }
-        // stopAssignTexture = std::chrono::high_resolution_clock::now();
 
 
         // startSetShader = std::chrono::high_resolution_clock::now();
