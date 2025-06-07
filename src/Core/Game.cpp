@@ -6,7 +6,6 @@
 #include <windows.h>
 #endif
 
-#include "OSMethods.hpp"
 #include "Game.hpp"
 #include "../Components/All.hpp"
 #include "../Events/KeyDown.hpp"
@@ -15,6 +14,10 @@
 #include "../Systems/TextureSystem.hpp"
 #include "../Systems/GUISystem.hpp"
 #include "GameState.hpp"
+#include "OSMethods.hpp"
+
+#include <model.h>
+
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -37,10 +40,14 @@ extern "C" void CreateGame(WindowManager *gameWindowManager, GameState *gameStat
     windowManager = gameWindowManager;
     WindowManager::InitialiseGlad();
     windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
+    // glfwMakeContextCurrent(gameWindowManager->GetWindow());
     if (!isCreated) Game::Init(gameWindowManager, gameState);
 }
 
 extern "C" void RunGame(ImGuiContext *hostContext) {
+    glfwMakeContextCurrent(windowManager->GetWindow()); // `window` must be a valid GLFWwindow*
+    WindowManager::InitialiseGlad(); // Initialise GLAD function pointers again as they get removed during hot reload
+
     Game::Run(hostContext);
 }
 
@@ -61,10 +68,10 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/vert_light.vert"), asset("/shaders/frag_light.frag"));
     state->engine_data.shaders = {default_shader, light_source_shader};
-    Texture container1 = Texture{asset("/textures/container.jpg"), GL_RGB};
-    Texture container2 = Texture{asset("/textures/container2.png"), GL_RGBA};
-    Texture container2_specular = Texture{asset("/textures/container2_specular.png"), GL_RGBA};
-    Texture awesomeface = Texture{asset("/textures/awesomeface.png"), GL_RGBA};
+    MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
+    MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
+    MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
+    MaterialTexture awesomeface = MaterialTexture{asset("/textures/awesomeface.png"), GL_RGBA};
     state->engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
 
@@ -197,12 +204,13 @@ const int Game::Run(ImGuiContext *hostContext)
     
     GLFWwindow *window = windowManager->GetWindow();
 
-    glfwMakeContextCurrent(window); // `window` must be a valid GLFWwindow*
-    WindowManager::InitialiseGlad(); // Initialise GLAD function pointers again as they get removed during hot reload
     ImGui::SetCurrentContext(hostContext);
 
     RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     TextureSystem::LoadTextures(state->engine_data.textures);
+
+    Model backpack = Model(asset("/models/backpack/backpack.obj"));
+
 
 
     while (!glfwWindowShouldClose(window))
@@ -216,7 +224,7 @@ const int Game::Run(ImGuiContext *hostContext)
         int reloaded = Events(deltaTime);
 
         // Update();
-        Render();
+        Render(backpack);
         if (reloaded) {
             Shutdown();
             return 0;
@@ -266,7 +274,7 @@ int Game::Events(float deltaTime)
     return 0;
 }
 
-void Game::Render()
+void Game::Render(Model &model)
 {
     // render
     // ------
@@ -286,6 +294,7 @@ void Game::Render()
 
     start = std::chrono::high_resolution_clock::now();
     RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+    // model.Draw(state->engine_data.shaders[1]);
     stop = std::chrono::high_resolution_clock::now();
 
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;

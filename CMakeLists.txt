@@ -10,9 +10,12 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(OpenGL REQUIRED)
 find_package(GLFW3 REQUIRED)
+find_package(Assimp REQUIRED)
 
 message(STATUS "GLFW3_LIBRARY: ${GLFW3_LIBRARY}")
 message(STATUS "GLFW3_INCLUDE_DIR: ${GLFW3_INCLUDE_DIR}")
+message(STATUS "ASSIMP_LIBRARY: ${ASSIMP_LIBRARY}")
+message(STATUS "ASSIMP_INCLUDE_DIR: ${ASSIMP_INCLUDE_DIR}")
 
 
 # Set the output directory
@@ -57,11 +60,11 @@ set_property(TARGET Terra PROPERTY CXX_STANDARD 17)
 file(COPY "${CMAKE_SOURCE_DIR}/src/assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Set include directories for libraries
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
+# target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
 
 
 # Link these libraries to the target
@@ -78,6 +81,7 @@ target_link_libraries(Terra PRIVATE
 target_link_libraries(TerraGame PRIVATE
     ${GLFW3_LIBRARY}
     OpenGL::GL
+    ${ASSIMP_LIBRARY}
     "-framework Cocoa"
     "-framework IOKit"
     "-framework CoreVideo"
@@ -88,5 +92,6 @@ target_link_libraries(TerraGame PRIVATE
 add_custom_command(TARGET Terra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${GLFW3_LIBRARY}
+        ${ASSIMP_LIBRARY}
         $<TARGET_FILE_DIR:Terra>/libraries/
 )

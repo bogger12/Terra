@@ -1,3 +1,5 @@
+#pragma once
+
 #include <filesystem>
 #ifdef _WIN32
 #include <libloaderapi.h>
@@ -12,7 +14,7 @@
 #define ASSET_DIR "assets"
 #endif
 
-std::filesystem::path getExecutableDir() {
+inline std::filesystem::path getExecutableDir() {
 #ifdef _WIN32
     char path[MAX_PATH];
     GetModuleFileNameA(NULL, path, MAX_PATH);
@@ -32,6 +34,6 @@ std::filesystem::path getExecutableDir() {
     return std::filesystem::path(path).parent_path();
 }
 
-std::string asset(const char* assetpath) {
+inline std::string asset(const char* assetpath) {
     return (getExecutableDir().string() + "/" + ASSET_DIR + assetpath);
 }

@@ -6,7 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bool TextureNode(const char *label, Texture &texture);
+bool TextureNode(const char *label, MaterialTexture &texture);
 
 
 glm::vec3 ExtractEulerAngles(const glm::mat4& matrix) {
@@ -153,8 +153,8 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 };
 
 
-bool TextureNode(const char *label, Texture &texture) {
-    Texture initTexture = texture;
+bool TextureNode(const char *label, MaterialTexture &texture) {
+    MaterialTexture initTexture = texture;
     if (ImGui::TreeNode(label))
     {
         ImGui::InputText("Path", &texture.texture_path);

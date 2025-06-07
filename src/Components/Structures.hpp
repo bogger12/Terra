@@ -6,7 +6,7 @@
 #include <string>
 
 
-struct Texture {
+struct MaterialTexture {
     std::string texture_path;
     GLint internalFormat = GL_RGB;
     unsigned int textureID = 0;
@@ -14,19 +14,19 @@ struct Texture {
     int width = 0; 
     int nrChannels = 0;
 
-    bool operator==(const Texture& other) const {
+    bool operator==(const MaterialTexture& other) const {
         return texture_path == other.texture_path &&
             internalFormat == other.internalFormat &&
             textureID == other.textureID;
     }
-    bool operator!=(const Texture& other) { return !(*this == other); }
+    bool operator!=(const MaterialTexture& other) { return !(*this == other); }
 };
 
 struct Material {
     glm::vec3 albedo = glm::vec3(1.0f, 1.0f, 1.0f);
-    Texture *diffuseMap;
+    MaterialTexture *diffuseMap;
     glm::vec3 diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
-    Texture *specularMap;
+    MaterialTexture *specularMap;
     glm::vec3 specular = glm::vec3(1.0f, 1.0f, 1.0f);
     float shininess = 32;
 
