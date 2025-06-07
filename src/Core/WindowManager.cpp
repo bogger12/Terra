@@ -17,11 +17,7 @@ WindowManager::~WindowManager()
     ImGui::DestroyContext();
 }
 
-void WindowManager::Create(int width, int height, std::string windowName, 
-    GLFWframebuffersizefun framebuffer_size_callback, 
-    GLFWcursorposfun mouse_callback, 
-    GLFWscrollfun scroll_callback
-)
+void WindowManager::Create(int width, int height, std::string windowName)
 {
     this->width = width;
     this->height = height;
@@ -39,7 +35,7 @@ void WindowManager::Create(int width, int height, std::string windowName,
 
     // glfw window creation
     // --------------------
-    window = glfwCreateWindow(width, height, "LearnOpenGL", NULL, NULL);
+    window = glfwCreateWindow(width, height, windowName.c_str(), NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -47,13 +43,9 @@ void WindowManager::Create(int width, int height, std::string windowName,
         // return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+}
 
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
+void WindowManager::InitialiseGlad() {
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -67,7 +59,19 @@ void WindowManager::Create(int width, int height, std::string windowName,
     glEnable(GL_DEPTH_TEST);
 
     ChangeVSync(true);
+}
 
+void WindowManager::SetCallbacks(GLFWframebuffersizefun framebuffer_size_callback, 
+    GLFWcursorposfun mouse_callback, 
+    GLFWscrollfun scroll_callback) {
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void WindowManager::InitialiseGUI() {
     // IMGUI STUFF
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -77,9 +81,17 @@ void WindowManager::Create(int width, int height, std::string windowName,
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplGlfw_InitForOpenGL(window, false); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
 }
+
+void WindowManager::ShutdownGUI() {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+
 
 void WindowManager::ChangeVSync(bool useVSync) {
     // Vsync (0 = off, 1 = on)

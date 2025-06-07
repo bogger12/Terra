@@ -17,16 +17,16 @@
 set( _glfw3_HEADER_SEARCH_DIRS
 	# "/usr/include"
 	# "/usr/local/include"
-	"${CMAKE_SOURCE_DIR}/include"
+	# "${CMAKE_SOURCE_DIR}/include"
 	"${PROJECT_SOURCE_DIR}/include"
-	"C:/Program Files (x86)/glfw/include" 
+	# "C:/Program Files (x86)/glfw/include" 
 )
 set( _glfw3_LIB_SEARCH_DIRS
 	# "/usr/lib"
 	# "/usr/local/lib"
-	"${CMAKE_SOURCE_DIR}/lib"
+	# "${CMAKE_SOURCE_DIR}/lib"
 	"${PROJECT_SOURCE_DIR}/lib"
-	"C:/Program Files (x86)/glfw/lib-msvc110" 
+	# "C:/Program Files (x86)/glfw/lib-msvc110" 
 )
 message(${PROJECT_SOURCE_DIR})
 
@@ -46,12 +46,14 @@ endif()
 FIND_PATH(
 	GLFW3_INCLUDE_DIR "GLFW/glfw3.h"
 	PATHS ${_glfw3_HEADER_SEARCH_DIRS} 
+	NO_DEFAULT_PATH
 )
 
 # Search for the library
 FIND_LIBRARY(
-	GLFW3_LIBRARY NAMES glfw3 glfw
+	GLFW3_LIBRARY NAMES glfw.3 glfw
 	PATHS ${_glfw3_LIB_SEARCH_DIRS} 
+	NO_DEFAULT_PATH
 )
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(GLFW3 DEFAULT_MSG

@@ -9,16 +9,19 @@ class WindowManager {
         WindowManager();
         ~WindowManager();
         int width, height;
-        void Create(int width, int height, std::string windowName,
-            GLFWframebuffersizefun framebuffer_size_callback,
-            GLFWcursorposfun mouse_callback,
-            GLFWscrollfun scroll_callback);
+        void Create(int width, int height, std::string windowName);
+        static void InitialiseGlad();
+        void SetCallbacks(GLFWframebuffersizefun framebuffer_size_callback, 
+            GLFWcursorposfun mouse_callback, 
+            GLFWscrollfun scroll_callback); 
+        void InitialiseGUI();
+        void ShutdownGUI();
         GLFWwindow* GetWindow() { return window; };
         void SetSize(int width, int height) { this->width = width; this->height = height; };
         void Close() noexcept;
         void OnKeyDown();
         void ChangeMouseMode(int value);
-        void ChangeVSync(bool);
+        static void ChangeVSync(bool);
 
     private:
         GLFWwindow* window;

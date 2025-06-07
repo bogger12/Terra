@@ -18,7 +18,7 @@ glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
     return glm::mat4_cast(glm::quat(glm::radians(euler)));
 }
 
-void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)())
+void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)())
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
@@ -38,8 +38,8 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
 
         ImGui::Text("Terra Engine v0.0.1");                       // Display some text (you can use a format strings too)
         ImGui::Dummy(ImVec2(0.0f, 20.0f));
-        ImGui::Checkbox("Demo Window", &global_state->show_demo_window); // Edit bools storing our window open/close state
-        ImGui::ColorEdit3("Clear color", (float *)&global_state->clear_color); // Edit 3 floats representing a color
+        ImGui::Checkbox("Demo Window", &state->show_demo_window); // Edit bools storing our window open/close state
+        ImGui::ColorEdit3("Clear color", (float *)&state->clear_color); // Edit 3 floats representing a color
 
         // if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
         //     counter++;
@@ -51,11 +51,14 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
-        ImGui::Text("Draw Calls: %u", global_state->drawCalls);
+        ImGui::Text("Draw Calls: %u", state->drawCalls);
 
+
+
+        ImGui::Text("Hot reload text!!!");
 
         ImGui::Text("Average %.3f ms (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        for (auto const& [timer, time] : global_state->time_map)
+        for (auto const& [timer, time] : time_map)
         {
             ImGui::Text("%s : %.3f ms", timer.c_str(), time);
         }
@@ -118,19 +121,22 @@ void GUISystem::DrawSideBar(entt::registry &registry, GlobalState *global_state,
                     ImGui::TreePop();
                 }
 
-                // // Light
-                // if (registry.any_of<Light>(entity) && ImGui::TreeNode("Light"))
-                // {
-                //     auto &light = registry.get<Light>(entity);
+                // Light
+                if (registry.any_of<PointLight>(entity) && ImGui::TreeNode("PointLight"))
+                {
+                    auto &pointLight = registry.get<PointLight>(entity);
 
-                //     if (ImGui::TreeNode("Light Material")) {
-                //         ImGui::ColorEdit3("Ambient", glm::value_ptr(light.ambient));
-                //         ImGui::ColorEdit3("Diffuse", glm::value_ptr(light.diffuse));
-                //         ImGui::ColorEdit3("Specular", glm::value_ptr(light.specular));
-                //         ImGui::TreePop();
-                //     }
-                //     ImGui::TreePop();
-                // }
+                    if (ImGui::TreeNode("Light Material")) {
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(pointLight.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(pointLight.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(pointLight.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::DragFloat("Constant", &pointLight.constant);
+                    ImGui::DragFloat("Linear", &pointLight.linear);
+                    ImGui::DragFloat("Quadratic", &pointLight.quadratic);
+                    ImGui::TreePop();
+                }
 
                 ImGui::TreePop();
             }

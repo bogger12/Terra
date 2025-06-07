@@ -4,15 +4,14 @@
 #include <entt/entt.hpp>
 #include "../Systems/RenderSystem.hpp"
 #include <camera.h>
+#include "GameState.hpp"
+
 
 class Game {
     public:
-        Game(std::string title, const int w, const int h);
-        const int Run();
-        void Events(float deltaTime);
-        void Render();
-    private:
-        entt::registry m_registry;
-
-        entt::dispatcher m_dispatcher;
+        static void Init(WindowManager *gameWindowManager, GameState *gameState);
+        static const int Run(ImGuiContext *hostContext);
+        static int Events(float deltaTime);
+        static void Render();
+        static void Shutdown();
 };
