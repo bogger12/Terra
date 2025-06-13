@@ -1,5 +1,6 @@
-# Terra Engine
+# Terra Engine (🚧 In Progress)
 #### Powered by OpenGL
+
 
 ##### The Engine In Action:
 ![alt text](images/terra-example.png "Example Image")
