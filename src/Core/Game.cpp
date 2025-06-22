@@ -44,11 +44,11 @@ extern "C" void CreateGame(WindowManager *gameWindowManager, GameState *gameStat
     if (!isCreated) Game::Init(gameWindowManager, gameState);
 }
 
-extern "C" void RunGame(ImGuiContext *hostContext) {
+extern "C" int RunGame(ImGuiContext *hostContext) {
     glfwMakeContextCurrent(windowManager->GetWindow()); // `window` must be a valid GLFWwindow*
     WindowManager::InitialiseGlad(); // Initialise GLAD function pointers again as they get removed during hot reload
 
-    Game::Run(hostContext);
+    return Game::Run(hostContext);
 }
 
 // Game Code
@@ -67,7 +67,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/vert_light.vert"), asset("/shaders/frag_light.frag"));
-    Shader model_shader = Shader(asset("/shaders/model_loading.vert"), asset("/shaders/model_loading.frag"));
+    Shader model_shader = Shader(asset("/shaders/model_lit.vert"), asset("/shaders/model_lit.frag"));
     state->engine_data.shaders = {default_shader, light_source_shader, model_shader};
     MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
@@ -128,8 +128,8 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
     };
 
-    float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
-    test_performance_entities(state->m_registry, cube_vertices, 2000, positionRange, scaleRange);
+    // float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
+    // test_performance_entities(state->m_registry, cube_vertices, 2000, positionRange, scaleRange);
 
     const auto cube_entity = state->m_registry.create();
     // Assign component data to entities.
@@ -188,6 +188,13 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     const auto model_test_entity = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
+    state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[2]);
+
+    const auto model_test_entity2 = state->m_registry.create();
+    state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(1.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(model_test_entity2, backpack);
+    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[2]);
+
 
 
 
@@ -232,11 +239,10 @@ const int Game::Run(ImGuiContext *hostContext)
         Render();
         if (reloaded) {
             Shutdown();
-            return 0;
+            return 1;
         }
     }
 
-    glfwTerminate();
     return 0;
 }
 

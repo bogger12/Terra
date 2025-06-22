@@ -40,24 +40,38 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     // global_state.time_map["5 Calculate Shader Matrices"] = 0.0f;
     // global_state.time_map["6 OpenGL Rendering Triangles"] = 0.0f;
     
-    auto modelsView = registry.view<Transform, ModelWrapper>();
-    modelsView.each([&](auto& transform, auto& modelWrapper) {
+    auto modelsView = registry.view<Transform, RenderingData, ModelWrapper>();
+    modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
         // auto &transform = meshesView.get<Transform>(entity);
         // auto &modelWrapper = meshesView.get<ModelWrapper>(entity);
-        Shader *currentShader = &state->engine_data.shaders[0];
-        glUseProgram(currentShader->ID);
-        // currentShader->setVec3("viewPos", camera.Position);
-        // pass projection matrix to shader (note that in this case it could change every frame)
-        currentShader->setMat4("projection", projectionMatrix);
-        // camera/view transformation
-        currentShader->setMat4("view", viewMatrix);
+        glUseProgram(renderingData.shader->ID);
+
+        renderingData.shader->setVec3("viewPos", camera.Position);
+        renderingData.shader->setMat4("projection", projectionMatrix);
+        renderingData.shader->setMat4("view", viewMatrix);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        currentShader->setMat4("model", modelMatrix);
+        modelMatrix = glm::translate(modelMatrix, transform.position); // Translate
+        modelMatrix *= transform.rotation; // Rotate
+        modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale        
+        renderingData.shader->setMat4("model", modelMatrix);
+        
+        // LIGHTS
+        int pointLightCount = 0; int spotLightCount = 0;
+        for (auto entity : lightsView) {
+            Transform &transform = registry.get<Transform>(entity);
+            if (PointLight *p = registry.try_get<PointLight>(entity)) p->SetShaderValues(renderingData.shader, transform.position, pointLightCount++);
+            else if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) d->SetShaderValues(renderingData.shader, transform.position);
+            else if (SpotLight *s = registry.try_get<SpotLight>(entity)) s->SetShaderValues(renderingData.shader, transform.position, spotLightCount++);
+        }
+        renderingData.shader->setInt("numPointLights", pointLightCount);
+        renderingData.shader->setInt("numSpotLights", spotLightCount);
 
-        modelWrapper.model.Draw(*currentShader);
+        renderingData.shader->setFloat("shininess", 32);
+        
+
+        modelWrapper.model.Draw(*renderingData.shader);
     });
-
 
     Material lastMaterial; 
     Shader* lastShader = nullptr; 
@@ -129,8 +143,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         modelMatrix *= transform.rotation; // Rotate
         modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale
         // stopCalcMatrix = std::chrono::high_resolution_clock::now();
-
-
         renderingData.shader->setMat4("model", modelMatrix);
         // startGLRender = std::chrono::high_resolution_clock::now();
         if (differentVAO) glBindVertexArray(modelData.VAO);

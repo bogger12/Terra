@@ -26,7 +26,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/libraries)
 
 # Change assets dir to be defined as local one
-add_compile_definitions(ASSET_DIR="assets")
+add_compile_definitions(ASSET_DIR="../src/assets")
 
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
@@ -50,6 +50,7 @@ set_target_properties(TerraGame PROPERTIES
 )
 
 
+SET(CMAKE_OSX_DEPLOYMENT_TARGET 12.0)
 
 # Create executable file
 add_executable(Terra src/main.cpp)

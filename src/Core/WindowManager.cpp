@@ -12,9 +12,6 @@ WindowManager::WindowManager()
 WindowManager::~WindowManager()
 {
     glfwTerminate();
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 void WindowManager::Create(int width, int height, std::string windowName)
