@@ -24,7 +24,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void reload_shaders();
-void test_performance_entities(entt::registry &m_registry, std::vector<float> &cube_vertices, int numObjects, float positionRange[2], float scaleRange[2]);
+void test_performance_entities(entt::registry &m_registry, int numObjects, float positionRange[2], float scaleRange[2], Model *model, Shader *shader);
 
 WindowManager *windowManager;
 GameState* state;
@@ -55,25 +55,25 @@ extern "C" int RunGame(ImGuiContext *hostContext) {
 
 void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 {
-    // Setting Variables from state
-    // state = gameState;
-    // windowManager = gameWindowManager;
 
-    // WindowManager::InitialiseGlad();
-    // windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
-    // windowManager->InitialiseGUI();
-    // Here, we are creating the entities using EnTT and attaching the relevant components and tags.
-    // We can invoke the constructor of the component or tag in the assign() and attach() methods of the registry.
-
+    // Setting Shaders
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
-    Shader light_source_shader = Shader(asset("/shaders/vert_light.vert"), asset("/shaders/frag_light.frag"));
-    Shader model_shader = Shader(asset("/shaders/model_lit.vert"), asset("/shaders/model_lit.frag"));
-    state->engine_data.shaders = {default_shader, light_source_shader, model_shader};
+    Shader light_source_shader = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
+    Shader model_shader1 = Shader(asset("/shaders/model_lit.vert"), asset("/shaders/model_lit.frag"));
+    Shader model_shader2 = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
+    state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2};
     MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
     MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
     MaterialTexture awesomeface = MaterialTexture{asset("/textures/awesomeface.png"), GL_RGBA};
     state->engine_data.textures = {container1, container2, container2_specular, awesomeface};
+
+    // Model backpack = Model(asset("/models/backpack/backpack.obj"));
+    Model barrel = Model(asset("/models/barrel/barrel.obj"));
+    Model light = Model(asset("/models/light/light.obj"));
+    // Model heart = Model(asset("/models/Human_Heart/Human_Heart.obj"));
+    Model nswitch = Model(asset("/models/switch/Mario_game_world_Scene.obj"));
+
 
 
     std::filesystem::path cwd = std::filesystem::current_path();
@@ -83,73 +83,14 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     std::cout << "Asset directory: " << ASSET_DIR << std::endl;
     std::cout << "Shader test: " << asset("/shaders/vert_lit.vert") << std::endl;
 
-    std::vector<float> cube_vertices = {
-        // positions          // normals           // texture coords
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
-    };
-
-    // float positionRange[] = {-50.0f, 50.0f}; float scaleRange[] = {1.0f, 2.0f};
-    // test_performance_entities(state->m_registry, cube_vertices, 2000, positionRange, scaleRange);
-
-    const auto cube_entity = state->m_registry.create();
-    // Assign component data to entities.
-    state->m_registry.emplace<Transform>(cube_entity, glm::vec3(0.0f, -2.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelData>(cube_entity, cube_vertices);
-    state->m_registry.emplace<RenderingData>(cube_entity, &state->engine_data.shaders[0], 
-        Material{
-            glm::vec3(1.0f, 0.5f, 0.31f), // Albedo
-            &state->engine_data.textures[1], // Container 2
-            glm::vec3(1.0f, 0.5f, 0.31f), // Diffuse
-            &state->engine_data.textures[2], // Specular
-            glm::vec3(0.5f, 0.5f, 0.5f), // Specular
-            32.0f // Shininess
-        }
-    );
+    
+    // float positionRange[] = {-20.0f, 20.0f}; float scaleRange[] = {2.0f, 5.0f};
+    // test_performance_entities(state->m_registry, 200, positionRange, scaleRange, &barrel, &state->engine_data.shaders[2]);
 
     const auto light_entity = state->m_registry.create();
     // Create light entity:
     state->m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    state->m_registry.emplace<ModelData>(light_entity, cube_vertices);
+    state->m_registry.emplace<ModelWrapper>(light_entity, light);
     state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[1]);
     state->m_registry.emplace<PointLight>(light_entity, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
@@ -161,7 +102,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     const auto light_entity2 = state->m_registry.create();
     state->m_registry.emplace<Transform>(light_entity2, glm::vec3(1.2f, -1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    state->m_registry.emplace<ModelData>(light_entity2, cube_vertices);
+    state->m_registry.emplace<ModelWrapper>(light_entity2, light);
     state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[1]);
     state->m_registry.emplace<PointLight>(light_entity2, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
@@ -173,7 +114,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     const auto light_entity3 = state->m_registry.create();
     state->m_registry.emplace<Transform>(light_entity3, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    state->m_registry.emplace<ModelData>(light_entity3, cube_vertices);
+    state->m_registry.emplace<ModelWrapper>(light_entity3, light);
     state->m_registry.emplace<RenderingData>(light_entity3, &state->engine_data.shaders[1]);
     state->m_registry.emplace<SpotLight>(light_entity3, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
@@ -184,16 +125,30 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     );
     state->m_registry.emplace<LightTag>(light_entity3);
 
-    Model backpack = Model(asset("/models/backpack/backpack.obj"));
-    const auto model_test_entity = state->m_registry.create();
-    state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
-    state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[2]);
+    // const auto model_test_entity = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 1.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
+    // state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[2]);
 
     const auto model_test_entity2 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(1.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity2, backpack);
+    state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
     state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[2]);
+    
+    const auto model_test_entity3 = state->m_registry.create();
+    state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
+    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders[2]);
+    
+    // const auto model_test_entity4 = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(model_test_entity4, glm::vec3(-1.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(model_test_entity4, heart);
+    // state->m_registry.emplace<RenderingData>(model_test_entity4, &state->engine_data.shaders[2]);
+
+    const auto model_test_entity5 = state->m_registry.create();
+    state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(model_test_entity5, nswitch);
+    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[2]);
 
 
 
@@ -208,6 +163,10 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     // Assign events to window.
    state->m_dispatcher.sink<KeyDown>().connect<&WindowManager::OnKeyDown>(windowManager);
 
+    // configure global opengl state
+    // -----------------------------
+    glEnable(GL_DEPTH_TEST);
+
 }
 
 const int Game::Run(ImGuiContext *hostContext)
@@ -221,8 +180,8 @@ const int Game::Run(ImGuiContext *hostContext)
 
     ImGui::SetCurrentContext(hostContext);
 
-    RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
-    TextureSystem::LoadTextures(state->engine_data.textures);
+    // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
+    // TextureSystem::LoadTextures(state->engine_data.textures);
 
 
     while (!glfwWindowShouldClose(window))
@@ -380,7 +339,7 @@ void reload_shaders() {
 }
 
 
-void test_performance_entities(entt::registry &m_registry, std::vector<float> &cube_vertices, int numObjects, float positionRange[2], float scaleRange[2]) {
+void test_performance_entities(entt::registry &m_registry, int numObjects, float positionRange[2], float scaleRange[2], Model *model, Shader *shader) {
     // Test performance with entities:
     std::default_random_engine generator;
     std::uniform_real_distribution<float> randPosition(positionRange[0], positionRange[1]);
@@ -388,16 +347,15 @@ void test_performance_entities(entt::registry &m_registry, std::vector<float> &c
     std::uniform_real_distribution<float> randScale(scaleRange[0], scaleRange[1]);
     std::uniform_real_distribution<float> randColor(0.0f, 1.0f);
     std::uniform_real_distribution<float> randGravity(-10.0f, -1.0f);
+
     for (int i = 0; i < numObjects; i++)
     {
         glm::vec3 position = glm::vec3(randPosition(generator), randPosition(generator), randPosition(generator));
         glm::mat4 rotation = glm::mat4_cast(glm::quat(glm::vec3(randRotation(generator), randRotation(generator), randRotation(generator))));
         glm::vec3 scale = glm::vec3(randScale(generator), randScale(generator), randScale(generator));
-        const auto cube_entity = m_registry.create();
-        m_registry.emplace<Transform>(cube_entity, position, rotation, scale);
-        m_registry.emplace<ModelData>(cube_entity, cube_vertices);
-        m_registry.emplace<RenderingData>(cube_entity, &state->engine_data.shaders[0], 
-            Material{glm::vec3(1.0f, 0.5f, 0.31f), &state->engine_data.textures[1], glm::vec3(1.0f, 0.5f, 0.31f), &state->engine_data.textures[2], glm::vec3(0.5f, 0.5f, 0.5f), 32.0f}
-        );
+        const auto model_test_entity = m_registry.create();
+        m_registry.emplace<Transform>(model_test_entity, position, rotation, scale);
+        m_registry.emplace<ModelWrapper>(model_test_entity, *model);
+        m_registry.emplace<RenderingData>(model_test_entity, shader);
     }
 }

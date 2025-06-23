@@ -145,13 +145,20 @@ private:
         }
         // process materials
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];    
+        aiColor3D color(0.f, 0.f, 0.f); 
+        float shininess;
         // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
         // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
         // Same applies to other texture as the following list summarizes:
         // diffuse: texture_diffuseN
         // specular: texture_specularN
         // normal: texture_normalN
-
+        ColorMaterial colorMat;
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, color); colorMat.Diffuse = glm::vec3(color.r, color.b, color.g);
+        material->Get(AI_MATKEY_COLOR_AMBIENT, color); colorMat.Ambient = glm::vec3(color.r, color.b, color.g);
+        material->Get(AI_MATKEY_COLOR_SPECULAR, color); colorMat.Specular = glm::vec3(color.r, color.b, color.g);
+        material->Get(AI_MATKEY_SHININESS, shininess); colorMat.Shininess = shininess;         
+        
         // 1. diffuse maps
         std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
@@ -166,7 +173,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
         
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures);
+        return Mesh(vertices, indices, textures, colorMat);
     }
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.
@@ -205,14 +212,20 @@ private:
 
 
 inline unsigned int TextureFromFile(const char *path, const std::string &directory, bool gamma)
-{
+{    
     std::string filename = std::string(path);
     filename = directory + '/' + filename;
+
+    // Replace backslashes
+    std::replace(filename.begin(), filename.end(), '\\', '/');
+
+
+    std::cout << "Loading file at " << filename << std::endl;
 
     unsigned int textureID;
     glGenTextures(1, &textureID);
 
-    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded textures on the y-axis.
+    // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded textures on the y-axis.
     int width, height, nrComponents;
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
     if (data)

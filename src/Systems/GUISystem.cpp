@@ -141,11 +141,13 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                         for (Mesh m : modelWrapper.model.meshes) { verticesCount += m.vertices.size(); }
                         // Slow to iterate throguh twice
                         ImGui::TextColored(ImVec4(0, 255, 0, 1), "%u Vertices Total", verticesCount);
+                        ImGui::TextColored(ImVec4(0, 255, 0, 1), "%lu Meshes", modelWrapper.model.meshes.size());
 
                         for ( Mesh m : modelWrapper.model.meshes ) {
                             ImGui::PushID(m.VAO);
 
                             ImGui::Text("%lu Vertices", m.vertices.size());
+                            ImGui::Text("%lu Textures", m.textures.size());
                             unsigned int tcount = 0;
                             for (Texture t : m.textures) {
                                 ImGui::PushID(tcount);

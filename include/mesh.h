@@ -15,6 +15,13 @@
 
 #define MAX_BONE_INFLUENCE 4
 
+struct ColorMaterial {
+    glm::vec3 Diffuse;
+    glm::vec3 Ambient;
+    glm::vec3 Specular;
+    float Shininess;
+};
+
 struct Vertex {
     // position
     glm::vec3 Position;
@@ -44,14 +51,16 @@ public:
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture>      textures;
+    ColorMaterial colorMaterial;
     unsigned int VAO;
 
     // constructor
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures, ColorMaterial colorMaterial)
     {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+        this->colorMaterial = colorMaterial;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -59,33 +68,43 @@ public:
 
     // render the mesh
     void Draw(Shader &shader) 
-    {
-        // bind appropriate textures
-        unsigned int diffuseNr  = 1;
-        unsigned int specularNr = 1;
-        unsigned int normalNr   = 1;
-        unsigned int heightNr   = 1;
-        for(unsigned int i = 0; i < textures.size(); i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
-            // retrieve texture number (the N in diffuse_textureN)
-            std::string number;
-            std::string name = textures[i].type;
-            if(name == "texture_diffuse")
-                number = std::to_string(diffuseNr++);
-            else if(name == "texture_specular")
-                number = std::to_string(specularNr++); // transfer unsigned int to string
-            else if(name == "texture_normal")
-                number = std::to_string(normalNr++); // transfer unsigned int to string
-             else if(name == "texture_height")
-                number = std::to_string(heightNr++); // transfer unsigned int to string
+    {   
+        bool useColor = textures.size()==0;
+        shader.setBool("useColor", useColor);
+        if (useColor) {
+            shader.setVec3("colorMat.diffuse", colorMaterial.Diffuse);
+            shader.setVec3("colorMat.specular", colorMaterial.Specular);
+            shader.setVec3("colorMat.ambient", colorMaterial.Ambient);
+            shader.setFloat("shininess", colorMaterial.Shininess);
+        } else {
+            // bind appropriate textures
+            unsigned int diffuseNr  = 1;
+            unsigned int specularNr = 1;
+            unsigned int normalNr   = 1;
+            unsigned int heightNr   = 1;
+            for(unsigned int i = 0; i < textures.size(); i++)
+            {
+                glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+                // retrieve texture number (the N in diffuse_textureN)
+                std::string number;
+                std::string name = textures[i].type;
+                if(name == "texture_diffuse")
+                    number = std::to_string(diffuseNr++);
+                else if(name == "texture_specular")
+                    number = std::to_string(specularNr++); // transfer unsigned int to string
+                else if(name == "texture_normal")
+                    number = std::to_string(normalNr++); // transfer unsigned int to string
+                else if(name == "texture_height")
+                    number = std::to_string(heightNr++); // transfer unsigned int to string
 
-            // now set the sampler to the correct texture unit
-            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+                // now set the sampler to the correct texture unit
+                glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
 
-            // and finally bind the texture
-            glBindTexture(GL_TEXTURE_2D, textures[i].id);
+                // and finally bind the texture
+                glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            }
         }
+
         
         // draw mesh
         glBindVertexArray(VAO);
