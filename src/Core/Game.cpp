@@ -71,8 +71,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     // Model backpack = Model(asset("/models/backpack/backpack.obj"));
     Model barrel = Model(asset("/models/barrel/barrel.obj"));
     Model light = Model(asset("/models/light/light.obj"));
-    // Model heart = Model(asset("/models/Human_Heart/Human_Heart.obj"));
-    Model nswitch = Model(asset("/models/switch/Mario_game_world_Scene.obj"));
+    Model room = Model(asset("/models/Isometric_Room_Blend/Isometric Room.obj"));
 
 
 
@@ -147,7 +146,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
     const auto model_test_entity5 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity5, nswitch);
+    state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
     state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[2]);
 
 
