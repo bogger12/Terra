@@ -5,6 +5,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <shader.h>
 #include <vector>
+#include <model.h>
 
 
 // ------------------
@@ -26,4 +27,8 @@ struct ModelData {
 struct RenderingData {
     Shader *shader;
     Material material;
+};
+
+struct ModelWrapper {
+    Model model;
 };

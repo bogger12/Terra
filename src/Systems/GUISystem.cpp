@@ -6,6 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+bool MaterialTextureNode(const char *label, MaterialTexture &texture);
 bool TextureNode(const char *label, Texture &texture);
 
 
@@ -18,7 +19,7 @@ glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
     return glm::mat4_cast(glm::quat(glm::radians(euler)));
 }
 
-void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)())
+void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager))
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
@@ -51,11 +52,14 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
+        if (ImGui::Button("Reinit State")) GameInit(&windowManager);
+
+
         ImGui::Text("Draw Calls: %u", state->drawCalls);
 
 
 
-        ImGui::Text("Hot reload text!!!");
+        ImGui::Text("Hot reload text");
 
         ImGui::Text("Average %.3f ms (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         for (auto const& [timer, time] : time_map)
@@ -70,11 +74,20 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         for (auto entity : allEntities) {
             uint32_t id = static_cast<uint32_t>(entity);
+            bool hasTransform = registry.any_of<Transform>(entity);
+            bool hasModelData = registry.any_of<ModelData>(entity);
+            bool hasRenderingData = registry.any_of<RenderingData>(entity);
+            bool hasPointLight = registry.any_of<PointLight>(entity);
+            bool hasModelWrapper = registry.any_of<ModelWrapper>(entity);
+            bool hasSpotLight = registry.any_of<SpotLight>(entity);
+            bool hasDirectionalLight = registry.any_of<DirectionalLight>(entity);
+
+
             ImGui::PushID(id);
             if (ImGui::TreeNode("", "Entity ID: %u", static_cast<uint32_t>(id)))
             {   
                 // Transform
-                if (registry.any_of<Transform>(entity) && ImGui::TreeNode("Transform")) {
+                if (hasTransform && ImGui::TreeNode("Transform")) {
                     auto &transform = registry.get<Transform>(entity);
                     ImGui::DragFloat3("Position", glm::value_ptr(transform.position));
                     static glm::vec3 eulerRotation = ExtractEulerAngles(transform.rotation);
@@ -86,7 +99,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                 }
 
                 // ModelData
-                if (registry.any_of<ModelData>(entity) && ImGui::TreeNode("ModelData"))
+                if (hasModelData && ImGui::TreeNode("ModelData"))
                 {
                     auto &modelData = registry.get<ModelData>(entity);
                     ImGui::Text("VBO: %d, VAO: %d", modelData.VBO, modelData.VAO);
@@ -101,18 +114,18 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                 }
 
                 // RenderingData
-                if (registry.any_of<RenderingData>(entity) && ImGui::TreeNode("RenderingData"))
+                if (hasRenderingData && ImGui::TreeNode("RenderingData"))
                 {
                     auto &renderingData = registry.get<RenderingData>(entity);
                     ImGui::Text("Shader ID: %u", renderingData.shader->ID);
                     if (ImGui::TreeNode("Material")) {
                         ImGui::ColorEdit3("Albedo", glm::value_ptr(renderingData.material.albedo));
                         ImGui::ColorEdit3("Diffuse", glm::value_ptr(renderingData.material.diffuse));
-                        if (TextureNode("Diffuse Texture", *renderingData.material.diffuseMap)) {
+                        if (MaterialTextureNode("Diffuse Texture", *renderingData.material.diffuseMap)) {
                             TextureSystem::LoadTextures(engine_data->textures); // Reload on path change
                         };
                         ImGui::ColorEdit3("Specular", glm::value_ptr(renderingData.material.specular));
-                        if (TextureNode("Specular Texture", *renderingData.material.specularMap)) {
+                        if (MaterialTextureNode("Specular Texture", *renderingData.material.specularMap)) {
                             TextureSystem::LoadTextures(engine_data->textures); // Reload on path change
                         };
                         ImGui::DragFloat("Shininess", &renderingData.material.shininess);
@@ -121,8 +134,43 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                     ImGui::TreePop();
                 }
 
+                // ModelWrapper
+                if (hasModelWrapper && ImGui::TreeNode("ModelWrapper"))
+                {
+                    auto &modelWrapper = registry.get<ModelWrapper>(entity);
+
+                    if (ImGui::TreeNode("Model")) {
+                        // Calculate Total Vertices:
+                        unsigned int verticesCount = 0;
+                        for (Mesh m : modelWrapper.model.meshes) { verticesCount += m.vertices.size(); }
+                        // Slow to iterate throguh twice
+                        ImGui::TextColored(ImVec4(0, 255, 0, 1), "%u Vertices Total", verticesCount);
+                        ImGui::TextColored(ImVec4(0, 255, 0, 1), "%lu Meshes", modelWrapper.model.meshes.size());
+
+                        for ( Mesh m : modelWrapper.model.meshes ) {
+                            ImGui::PushID(m.VAO);
+
+                            ImGui::Text("%lu Vertices", m.vertices.size());
+                            ImGui::Text("%lu Textures", m.textures.size());
+                            unsigned int tcount = 0;
+                            for (Texture t : m.textures) {
+                                ImGui::PushID(tcount);
+                                if (TextureNode(t.type.c_str(), t)) {
+                                    // Nothing
+                                }
+                                tcount++;
+                                ImGui::PopID();
+                            }
+                            ImGui::PopID();
+                        }
+                        ImGui::TreePop();
+                    }
+                    ImGui::TreePop();
+                }
+                
+
                 // Light
-                if (registry.any_of<PointLight>(entity) && ImGui::TreeNode("PointLight"))
+                if (hasPointLight && ImGui::TreeNode("PointLight"))
                 {
                     auto &pointLight = registry.get<PointLight>(entity);
 
@@ -138,11 +186,39 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                     ImGui::TreePop();
                 }
 
+                if (hasSpotLight && ImGui::TreeNode("SpotLight"))
+                {
+                    auto &spotLight = registry.get<SpotLight>(entity);
+
+                    if (ImGui::TreeNode("Light Material")) {
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(spotLight.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(spotLight.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(spotLight.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::DragFloat3("Direction", glm::value_ptr(spotLight.direction));
+                    ImGui::DragFloat("Cutoff", &spotLight.cutOff);
+                    ImGui::DragFloat("Outer Cutoff", &spotLight.outerCutOff);
+                    ImGui::TreePop();
+                }
+                if (hasDirectionalLight && ImGui::TreeNode("Directional Light"))
+                {
+                    auto &dirLight = registry.get<DirectionalLight>(entity);
+
+                    if (ImGui::TreeNode("Light Material")) {
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(dirLight.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(dirLight.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(dirLight.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::DragFloat3("Direction", glm::value_ptr(dirLight.direction));
+                    ImGui::TreePop();
+                }
+
                 ImGui::TreePop();
             }
             ImGui::PopID();
 
-            // ImGui::Text("Entity ID: %u", static_cast<uint32_t>(entity));
         }
         ImGui::EndChild();
 
@@ -153,8 +229,8 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 };
 
 
-bool TextureNode(const char *label, Texture &texture) {
-    Texture initTexture = texture;
+bool MaterialTextureNode(const char *label, MaterialTexture &texture) {
+    MaterialTexture initTexture = texture;
     if (ImGui::TreeNode(label))
     {
         ImGui::InputText("Path", &texture.texture_path);
@@ -172,3 +248,17 @@ bool TextureNode(const char *label, Texture &texture) {
     }
     return (initTexture != texture); 
 };
+
+bool TextureNode(const char *label, Texture &texture) {
+    Texture initTexture = texture;
+    if (ImGui::TreeNode(label))
+    {
+        ImGui::InputText("Path", &texture.path);
+        // ImGui::Text("size = %d x %d", texture., texture.height);
+        ImGui::Text("textureID: %u", texture.id);
+        ImGui::Image((ImTextureID)(intptr_t)texture.id, ImVec2(100.0f, 100.0f), {0, 1}, {1, 0});
+
+        ImGui::TreePop();
+    }
+    return (initTexture.path != texture.path); 
+}

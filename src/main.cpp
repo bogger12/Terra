@@ -40,7 +40,9 @@ int main(int argsc, char *argsv[])
         // Game game("OpenGL Game", 800, 600);
         gameWindowManager.Create(w, h, windowName);
         while(true) {
-            load_shared_lib();
+            if (!load_shared_lib()) {
+                return EXIT_SUCCESS;
+            }
         }
         // return game.Run();
     }
@@ -72,7 +74,7 @@ int load_shared_lib() {
     }
 
     typedef void (*CreateGameFn)(WindowManager *gameWindowManager, GameState *gameState, bool instanceCreated);
-    typedef void (*RunGameFn)(ImGuiContext *hostContext);
+    typedef int (*RunGameFn)(ImGuiContext *hostContext);
     CreateGameFn createGame = (CreateGameFn)dlsym(handle, "CreateGame");
     RunGameFn runGame = (RunGameFn)dlsym(handle, "RunGame");
 
@@ -86,9 +88,9 @@ int load_shared_lib() {
     gameWindowManager.InitialiseGUI();
     ImGui_ImplGlfw_InstallCallbacks(gameWindowManager.GetWindow());
     instanceCreated = true;
-    runGame(ImGui::GetCurrentContext());
+    int runResult = runGame(ImGui::GetCurrentContext());
     gameWindowManager.ShutdownGUI();
-
+    
     dlclose(handle);
-    return 0;
+    return runResult;
 }

@@ -12,7 +12,7 @@
 class TextureSystem {
     public:
         TextureSystem() = default;
-        static void LoadTextures(std::vector<Texture> &textures);
+        static void LoadTextures(std::vector<MaterialTexture> &textures);
 };
 
 unsigned int LoadTextureFromPath(std::string texture_path, int &width, int &height, int &nrChannels, GLint internalFormat = GL_RGB);

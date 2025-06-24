@@ -7,7 +7,7 @@ struct TextureDescriptor {
     int width = 0, height = 0, nrChannels = 0;
 };
 
-void TextureSystem::LoadTextures(std::vector<Texture> &textures)
+void TextureSystem::LoadTextures(std::vector<MaterialTexture> &textures)
 {
     for (auto& tex : textures) {
         glDeleteTextures(1, &tex.textureID);

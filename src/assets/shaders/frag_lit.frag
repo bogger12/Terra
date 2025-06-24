@@ -2,12 +2,7 @@
 
 #version 330 core
 
-struct Material {
-    sampler2D diffuse;
-    // vec3 diffuse;
-    sampler2D specular;
-    float shininess;
-};
+// LIGHTS
 
 struct DirLight {
     vec3 direction;
@@ -39,7 +34,6 @@ struct SpotLight {
     vec3 specular;
 };
 
-
 uniform DirLight dirLight;
 
 #define MAX_POINT_LIGHTS 2
@@ -50,6 +44,17 @@ uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 uniform int numPointLights;
 uniform int numSpotLights;
 
+// MATERIAL
+
+struct Material {
+    sampler2D diffuse;
+    // vec3 diffuse;
+    sampler2D specular;
+    float shininess;
+};
+
+uniform Material material;
+uniform vec3 viewPos;
 
 out vec4 FragColor;
 
@@ -57,10 +62,6 @@ in vec3 Normal;
 in vec3 FragPos;  
 in vec2 TexCoords;
 
-
-uniform Material material;
-
-uniform vec3 viewPos;
 
 vec3 CalcDirectionalLight(DirLight light, vec3 normal, vec3 viewDir);
 vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);

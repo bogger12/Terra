@@ -10,9 +10,12 @@ set(CMAKE_BUILD_TYPE Debug)
 
 find_package(OpenGL REQUIRED)
 find_package(GLFW3 REQUIRED)
+find_package(Assimp REQUIRED)
 
 message(STATUS "GLFW3_LIBRARY: ${GLFW3_LIBRARY}")
 message(STATUS "GLFW3_INCLUDE_DIR: ${GLFW3_INCLUDE_DIR}")
+message(STATUS "ASSIMP_LIBRARY: ${ASSIMP_LIBRARY}")
+message(STATUS "ASSIMP_INCLUDE_DIR: ${ASSIMP_INCLUDE_DIR}")
 
 
 # Set the output directory
@@ -23,7 +26,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/libraries)
 
 # Change assets dir to be defined as local one
-add_compile_definitions(ASSET_DIR="assets")
+add_compile_definitions(ASSET_DIR="../src/assets")
 
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
@@ -47,6 +50,7 @@ set_target_properties(TerraGame PROPERTIES
 )
 
 
+SET(CMAKE_OSX_DEPLOYMENT_TARGET 12.0)
 
 # Create executable file
 add_executable(Terra src/main.cpp)
@@ -57,11 +61,11 @@ set_property(TARGET Terra PROPERTY CXX_STANDARD 17)
 file(COPY "${CMAKE_SOURCE_DIR}/src/assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
 # Set include directories for libraries
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
+# target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
 
 
 # Link these libraries to the target
@@ -78,6 +82,7 @@ target_link_libraries(Terra PRIVATE
 target_link_libraries(TerraGame PRIVATE
     ${GLFW3_LIBRARY}
     OpenGL::GL
+    ${ASSIMP_LIBRARY}
     "-framework Cocoa"
     "-framework IOKit"
     "-framework CoreVideo"
@@ -88,5 +93,6 @@ target_link_libraries(TerraGame PRIVATE
 add_custom_command(TARGET Terra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${GLFW3_LIBRARY}
+        ${ASSIMP_LIBRARY}
         $<TARGET_FILE_DIR:Terra>/libraries/
 )

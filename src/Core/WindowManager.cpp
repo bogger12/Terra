@@ -12,9 +12,6 @@ WindowManager::WindowManager()
 WindowManager::~WindowManager()
 {
     glfwTerminate();
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 void WindowManager::Create(int width, int height, std::string windowName)
@@ -53,10 +50,6 @@ void WindowManager::InitialiseGlad() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         // return -1;
     }
-
-    // configure global opengl state
-    // -----------------------------
-    glEnable(GL_DEPTH_TEST);
 
     ChangeVSync(true);
 }

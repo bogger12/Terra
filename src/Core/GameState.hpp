@@ -12,7 +12,7 @@ struct EngineData
 {
     // Engine Data
     std::vector<Shader> shaders;
-    std::vector<Texture> textures;
+    std::vector<MaterialTexture> textures;
 };
 
 struct GameState
