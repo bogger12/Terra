@@ -19,7 +19,7 @@ glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
     return glm::mat4_cast(glm::quat(glm::radians(euler)));
 }
 
-void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)())
+void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager))
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
@@ -52,6 +52,9 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
+        if (ImGui::Button("Reinit State")) GameInit(&windowManager);
+
+
         ImGui::Text("Draw Calls: %u", state->drawCalls);
 
 
@@ -77,6 +80,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
             bool hasPointLight = registry.any_of<PointLight>(entity);
             bool hasModelWrapper = registry.any_of<ModelWrapper>(entity);
             bool hasSpotLight = registry.any_of<SpotLight>(entity);
+            bool hasDirectionalLight = registry.any_of<DirectionalLight>(entity);
 
 
             ImGui::PushID(id);
@@ -192,9 +196,22 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
                         ImGui::ColorEdit3("Specular", glm::value_ptr(spotLight.specular));
                         ImGui::TreePop();
                     }
-                    ImGui::DragFloat("Direction", glm::value_ptr(spotLight.direction));
+                    ImGui::DragFloat3("Direction", glm::value_ptr(spotLight.direction));
                     ImGui::DragFloat("Cutoff", &spotLight.cutOff);
                     ImGui::DragFloat("Outer Cutoff", &spotLight.outerCutOff);
+                    ImGui::TreePop();
+                }
+                if (hasDirectionalLight && ImGui::TreeNode("Directional Light"))
+                {
+                    auto &dirLight = registry.get<DirectionalLight>(entity);
+
+                    if (ImGui::TreeNode("Light Material")) {
+                        ImGui::ColorEdit3("Ambient", glm::value_ptr(dirLight.ambient));
+                        ImGui::ColorEdit3("Diffuse", glm::value_ptr(dirLight.diffuse));
+                        ImGui::ColorEdit3("Specular", glm::value_ptr(dirLight.specular));
+                        ImGui::TreePop();
+                    }
+                    ImGui::DragFloat3("Direction", glm::value_ptr(dirLight.direction));
                     ImGui::TreePop();
                 }
 

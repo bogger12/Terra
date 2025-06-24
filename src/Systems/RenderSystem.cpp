@@ -11,11 +11,11 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
     auto lightsView = registry.view<Transform, LightTag>();
 
-    
-    lightsView.each([&](auto& transform) {
-        float time = glfwGetTime();
-        transform.position = glm::vec3(sin(time), transform.position.y, cos(time));
-    });
+    // Move lights
+    // lightsView.each([&](auto& transform) {
+    //     float time = glfwGetTime();
+    //     transform.position = glm::vec3(sin(time), transform.position.y, cos(time));
+    // });
 
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
@@ -37,16 +37,26 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale        
         renderingData.shader->setMat4("model", modelMatrix);
         
-        // LIGHTS
-        int pointLightCount = 0; int spotLightCount = 0;
+        // // LIGHTS
+        
         for (auto entity : lightsView) {
-            Transform &transform = registry.get<Transform>(entity);
-            if (PointLight *p = registry.try_get<PointLight>(entity)) p->SetShaderValues(renderingData.shader, transform.position, pointLightCount++);
-            else if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) d->SetShaderValues(renderingData.shader, transform.position);
-            else if (SpotLight *s = registry.try_get<SpotLight>(entity)) s->SetShaderValues(renderingData.shader, transform.position, spotLightCount++);
+            if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) {
+                renderingData.shader->setVec3("dirLight.ambient", d->ambient);
+                renderingData.shader->setVec3("dirLight.diffuse", d->diffuse);
+                renderingData.shader->setVec3("dirLight.specular", d->specular);
+                renderingData.shader->setVec3("dirLight.direction", d->direction);
+            }
         }
-        renderingData.shader->setInt("numPointLights", pointLightCount);
-        renderingData.shader->setInt("numSpotLights", spotLightCount);
+
+        // int pointLightCount = 0; int spotLightCount = 0;
+        // for (auto entity : lightsView) {
+        //     Transform &transform = registry.get<Transform>(entity);
+        //     if (PointLight *p = registry.try_get<PointLight>(entity)) p->SetShaderValues(renderingData.shader, transform.position, pointLightCount++);
+        //     else if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) d->SetShaderValues(renderingData.shader, transform.position);
+        //     else if (SpotLight *s = registry.try_get<SpotLight>(entity)) s->SetShaderValues(renderingData.shader, transform.position, spotLightCount++);
+        // }
+        // // renderingData.shader->setInt("numPointLights", pointLightCount);
+        // // renderingData.shader->setInt("numSpotLights", spotLightCount);
 
         renderingData.shader->setFloat("shininess", 32);
         

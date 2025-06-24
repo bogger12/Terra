@@ -77,6 +77,8 @@ public:
             shader.setVec3("colorMat.ambient", colorMaterial.Ambient);
             shader.setFloat("shininess", colorMaterial.Shininess);
         } else {
+            shader.setVec3("colorMat.diffuse", glm::vec3(0.0));
+
             // bind appropriate textures
             unsigned int diffuseNr  = 1;
             unsigned int specularNr = 1;

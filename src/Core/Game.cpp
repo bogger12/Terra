@@ -41,7 +41,7 @@ extern "C" void CreateGame(WindowManager *gameWindowManager, GameState *gameStat
     WindowManager::InitialiseGlad();
     windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
     // glfwMakeContextCurrent(gameWindowManager->GetWindow());
-    if (!isCreated) Game::Init(gameWindowManager, gameState);
+    if (!isCreated) Game::Init(gameWindowManager);
 }
 
 extern "C" int RunGame(ImGuiContext *hostContext) {
@@ -53,20 +53,22 @@ extern "C" int RunGame(ImGuiContext *hostContext) {
 
 // Game Code
 
-void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
+void Game::Init(WindowManager *gameWindowManager)
 {
+    // state->m_registry.clear();
+    state = new GameState();
 
     // Setting Shaders
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
-    Shader model_shader1 = Shader(asset("/shaders/model_lit.vert"), asset("/shaders/model_lit.frag"));
+    Shader model_shader1 = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
     Shader model_shader2 = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
     state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2};
-    MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
-    MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
-    MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
-    MaterialTexture awesomeface = MaterialTexture{asset("/textures/awesomeface.png"), GL_RGBA};
-    state->engine_data.textures = {container1, container2, container2_specular, awesomeface};
+    // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
+    // MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
+    // MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
+    // MaterialTexture awesomeface = MaterialTexture{asset("/textures/awesomeface.png"), GL_RGBA};
+    // state->engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
     // Model backpack = Model(asset("/models/backpack/backpack.obj"));
     Model barrel = Model(asset("/models/barrel/barrel.obj"));
@@ -99,30 +101,30 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     );
     state->m_registry.emplace<LightTag>(light_entity);
 
-    const auto light_entity2 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(light_entity2, glm::vec3(1.2f, -1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    state->m_registry.emplace<ModelWrapper>(light_entity2, light);
-    state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[1]);
-    state->m_registry.emplace<PointLight>(light_entity2, 
-        glm::vec3(0.2f, 0.2f, 0.2f), 
-        glm::vec3(0.5f, 0.5f, 0.5f), 
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        1.0f, 0.09f, 0.032f
-    );
-    state->m_registry.emplace<LightTag>(light_entity2);
+    // const auto light_entity2 = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(light_entity2, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    // state->m_registry.emplace<ModelWrapper>(light_entity2, light);
+    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[1]);
+    // state->m_registry.emplace<SpotLight>(light_entity2, 
+    //     glm::vec3(0.2f, 0.2f, 0.2f), 
+    //     glm::vec3(0.5f, 0.5f, 0.5f), 
+    //     glm::vec3(1.0f, 1.0f, 1.0f),
+    //     glm::vec3(-5.0f, 0.0f, 2.0f),
+    //     12.5f, 17.5f
+    // );
+    // state->m_registry.emplace<LightTag>(light_entity2);
 
-    const auto light_entity3 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(light_entity3, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    state->m_registry.emplace<ModelWrapper>(light_entity3, light);
-    state->m_registry.emplace<RenderingData>(light_entity3, &state->engine_data.shaders[1]);
-    state->m_registry.emplace<SpotLight>(light_entity3, 
+    const auto dirlight = state->m_registry.create();
+    state->m_registry.emplace<Transform>(dirlight, glm::vec3(0.0f, 5.0f, 0.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    state->m_registry.emplace<ModelWrapper>(dirlight, light);
+    state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[1]);
+    state->m_registry.emplace<DirectionalLight>(dirlight, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
         glm::vec3(0.5f, 0.5f, 0.5f), 
         glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(-5.0f, 0.0f, 2.0f),
-        12.5f, 17.5f
+        glm::vec3(0.3f, -1.0f, 0.2f)
     );
-    state->m_registry.emplace<LightTag>(light_entity3);
+    state->m_registry.emplace<LightTag>(dirlight);
 
     // const auto model_test_entity = state->m_registry.create();
     // state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 1.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -165,6 +167,12 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    // glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+    glEnable(GL_CULL_FACE); 
+    // glCullFace(GL_FRONT); 
 
 }
 
@@ -248,7 +256,7 @@ void Game::Render()
     // render
     // ------
     glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
     auto start = std::chrono::high_resolution_clock::now();
 
     // Start the Dear ImGui frame
@@ -257,7 +265,7 @@ void Game::Render()
     ImGui::NewFrame();
     if (state->show_demo_window) ImGui::ShowDemoWindow(); // Show demo window! :)
 
-    GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, *windowManager, &reload_shaders);
+    GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, *windowManager, &reload_shaders, &Init);
     auto stop = std::chrono::high_resolution_clock::now();
     time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 

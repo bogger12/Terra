@@ -52,7 +52,7 @@ struct ColorMaterial {
     vec3 specular;
 };
 uniform ColorMaterial colorMat;
-uniform bool useColor;
+bool useColor = colorMat.diffuse != vec3(0.0);
 
 uniform sampler2D texture_diffuse1;
 // vec3 diffusecolor;
