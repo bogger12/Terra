@@ -84,7 +84,14 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
 
             ImGui::PushID(id);
-            if (ImGui::TreeNode("", "Entity ID: %u", static_cast<uint32_t>(id)))
+            std::string entityType;
+            if (hasPointLight || hasSpotLight || hasDirectionalLight) entityType = "Light";
+            else if (hasModelWrapper) entityType = "Mesh";
+            else entityType = "Empty";
+            std::ostringstream name; name << entityType << " " << id;
+            std::string nameStr = name.str();
+
+            if (ImGui::TreeNode(nameStr.c_str()))
             {   
                 // Transform
                 if (hasTransform && ImGui::TreeNode("Transform")) {

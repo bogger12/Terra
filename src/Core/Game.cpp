@@ -55,8 +55,7 @@ extern "C" int RunGame(ImGuiContext *hostContext) {
 
 void Game::Init(WindowManager *gameWindowManager)
 {
-    // state->m_registry.clear();
-    state = new GameState();
+    state->m_registry.clear();
 
     // Setting Shaders
     Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
