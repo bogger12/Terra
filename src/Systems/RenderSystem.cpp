@@ -6,9 +6,51 @@
 
 #include "RenderSystem.hpp"
 
+
+void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture) {
+    // unsigned int fbo;
+    glGenFramebuffers(1, fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
+
+    // unsigned int renderTexture;
+    glGenTextures(1, renderTexture);
+    glBindTexture(GL_TEXTURE_2D, *renderTexture);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowManager.width, windowManager.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
+
+    // Attach texture to framebuffer
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *renderTexture, 0);  
+
+
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowManager.width, windowManager.height);  
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Attach the renderbuffer object to the depth and stencil attachment of the framebuffer
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+
+    // glDeleteFramebuffers(1, &fbo); 
+    // glDeleteRenderbuffers(1, &rbo);
+
+
+    // We get the texture and fbo out of this - rbo is discarded once allocated
+    
+}
+
+
 void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera)
 {   
-
+    
     auto lightsView = registry.view<Transform, LightTag>();
 
     // Move lights
@@ -119,6 +161,7 @@ void RenderSystem::BindVertexArray(entt::registry &registry, bool reloadVBOs) {
         // normal attribute
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
+        // texture attribute
         glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
 

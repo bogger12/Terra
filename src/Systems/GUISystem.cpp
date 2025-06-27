@@ -54,8 +54,13 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         if (ImGui::Button("Reinit State")) GameInit(&windowManager);
 
+        float aspect = (float)windowManager.width / (float)windowManager.height;
+        ImGui::Image((ImTextureID)(intptr_t)state->renderTexture, ImVec2(windowWidth * 0.95f, windowWidth * 0.95f / aspect), {0, 1}, {1, 0});
+
+
 
         ImGui::Text("Draw Calls: %u", state->drawCalls);
+        
 
 
 

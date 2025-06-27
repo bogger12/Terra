@@ -12,6 +12,7 @@
 #include <camera.h>
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
+#include "../Utilities/Primitives.hpp"
 #include "../Systems/GUISystem.hpp"
 #include "GameState.hpp"
 #include "OSMethods.hpp"
@@ -31,6 +32,7 @@ GameState* state;
 
 // For time testing
 std::map<std::string, float> time_map;
+
 
 
 // NEEDED FOR DYNAMIC LINKING SYMBOL LOOKUP
@@ -62,7 +64,8 @@ void Game::Init(WindowManager *gameWindowManager)
     Shader light_source_shader = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
     Shader model_shader1 = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
     Shader model_shader2 = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
-    state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2};
+    Shader screenQuadShader = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
+    state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2, screenQuadShader};
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     // MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
     // MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
@@ -173,6 +176,11 @@ void Game::Init(WindowManager *gameWindowManager)
     glEnable(GL_CULL_FACE); 
     // glCullFace(GL_FRONT); 
 
+    // Because its a retina display wtf?? Gets reset on size change
+    windowManager->width *= 2;
+    windowManager->height *= 2;
+    glViewport(0, 0, windowManager->width, windowManager->height);
+
 }
 
 const int Game::Run(ImGuiContext *hostContext)
@@ -185,6 +193,10 @@ const int Game::Run(ImGuiContext *hostContext)
     GLFWwindow *window = windowManager->GetWindow();
 
     ImGui::SetCurrentContext(hostContext);
+
+    Primitives::SetupQuadVAO(&state->quadVAO);
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture);
+
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     // TextureSystem::LoadTextures(state->engine_data.textures);
@@ -252,10 +264,29 @@ int Game::Events(float deltaTime)
 
 void Game::Render()
 {
+    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+    glBindFramebuffer(GL_FRAMEBUFFER, state->fbo);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+    glEnable(GL_DEPTH_TEST);
+    RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    // glClear(GL_COLOR_BUFFER_BIT);
+
+    state->engine_data.shaders[4].use();  
+    glBindVertexArray(state->quadVAO);
+    glDisable(GL_DEPTH_TEST);
+    glBindTexture(GL_TEXTURE_2D, state->renderTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);  
+
+
     // render
     // ------
-    glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    // glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
     auto start = std::chrono::high_resolution_clock::now();
 
     // Start the Dear ImGui frame
@@ -269,7 +300,7 @@ void Game::Render()
     time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     start = std::chrono::high_resolution_clock::now();
-    RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+    // RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
     stop = std::chrono::high_resolution_clock::now();
 
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
@@ -303,6 +334,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     windowManager->SetSize(width, height);
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture);
 }
 
 // glfw: whenever the mouse moves, this callback is called
