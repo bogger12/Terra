@@ -195,7 +195,10 @@ const int Game::Run(ImGuiContext *hostContext)
     ImGui::SetCurrentContext(hostContext);
 
     Primitives::SetupQuadVAO(&state->quadVAO);
-    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture);
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
+    glUseProgram(state->engine_data.shaders[4].ID);
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "renderTexture"), 0); // GL_TEXTURE0
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "depthTexture"), 1); // GL_TEXTURE1
 
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
@@ -270,6 +273,8 @@ void Game::Render()
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
     glEnable(GL_DEPTH_TEST);
+    // glDepthMask(GL_TRUE);
+
     RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -279,7 +284,16 @@ void Game::Render()
     state->engine_data.shaders[4].use();  
     glBindVertexArray(state->quadVAO);
     glDisable(GL_DEPTH_TEST);
+    // glDepthMask(GL_FALSE);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, state->renderTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, state->depthTexture);
+
+        glUseProgram(state->engine_data.shaders[4].ID);
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "renderTexture"), 0); // GL_TEXTURE0
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "depthTexture"), 1); // GL_TEXTURE1
+
     glDrawArrays(GL_TRIANGLES, 0, 6);  
 
 
@@ -334,7 +348,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     windowManager->SetSize(width, height);
-    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture);
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
 }
 
 // glfw: whenever the mouse moves, this callback is called

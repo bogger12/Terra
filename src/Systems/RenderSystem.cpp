@@ -7,32 +7,39 @@
 #include "RenderSystem.hpp"
 
 
-void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture) {
+void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture, unsigned int *depthTexture) {
     // unsigned int fbo;
     glGenFramebuffers(1, fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
 
-    // unsigned int renderTexture;
     glGenTextures(1, renderTexture);
     glBindTexture(GL_TEXTURE_2D, *renderTexture);
-    
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowManager.width, windowManager.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
 
+    glGenTextures(1, depthTexture);
+    glBindTexture(GL_TEXTURE_2D, *depthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowManager.width, windowManager.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  
+
     // Attach texture to framebuffer
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *renderTexture, 0);  
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *depthTexture, 0);  
+    
+    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, drawBuffers);
 
 
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowManager.width, windowManager.height);  
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    // unsigned int rbo;
+    // glGenRenderbuffers(1, &rbo);
+    // glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
+    // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowManager.width, windowManager.height);  
+    // glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    // Attach the renderbuffer object to the depth and stencil attachment of the framebuffer
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    // // Attach the renderbuffer object to the depth and stencil attachment of the framebuffer
+    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -103,7 +110,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         renderingData.shader->setFloat("shininess", 32);
         
 
-        modelWrapper.model.Draw(*renderingData.shader);
+        modelWrapper.model.Draw(*renderingData.shader, true);
     });
 };
 

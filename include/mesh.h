@@ -67,7 +67,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader &shader) 
+    void Draw(Shader &shader, bool assignTextures) 
     {   
         bool useColor = textures.size()==0;
         shader.setBool("useColor", useColor);
@@ -76,7 +76,7 @@ public:
             shader.setVec3("colorMat.specular", colorMaterial.Specular);
             shader.setVec3("colorMat.ambient", colorMaterial.Ambient);
             shader.setFloat("shininess", colorMaterial.Shininess);
-        } else {
+        } else if (assignTextures) {
             shader.setVec3("colorMat.diffuse", glm::vec3(0.0));
 
             // bind appropriate textures
