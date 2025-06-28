@@ -21,7 +21,7 @@ void main()
     float depth = 1-LinearizeDepth(texture(depthTexture, TexCoords).r)/far;
     // FragColor = vec4(vec3(depth), 1.0);
     // return;
-    FragColor = vec4(vec3(texture(renderTexture, TexCoords))*depth, 1.0);
+    FragColor = vec4(vec3(texture(renderTexture, TexCoords)), 1.0);
     return;
     vec2 offsets[9] = vec2[](
         vec2(-offset,  offset), // top-left

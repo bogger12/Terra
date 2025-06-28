@@ -59,6 +59,8 @@ uniform sampler2D texture_diffuse1;
 // vec3 diffusecolor;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
+
+uniform samplerCube reflectionMap;
 uniform float shininess;
 
 uniform vec3 viewPos;
@@ -120,6 +122,13 @@ void main()
 
     // define an output color value
     vec3 result = vec3(0.0);
+
+    // Reflection test
+    // float ratio = 1.00 / 1.52;
+    // vec3 R = reflect(-viewDir, normal);
+    // // vec3 R = refract(-viewDir, normal, ratio);
+    // FragColor = vec4(texture(reflectionMap, R).rgb, 1.0);
+    // return;
 
     // phase 1: Directional lighting
     result += CalcDirectionalLight(dirLight, normal, viewDir);

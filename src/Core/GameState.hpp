@@ -39,7 +39,9 @@ struct GameState
 
     // Rendering
 
-    unsigned int fbo, renderTexture, depthTexture, quadVAO;
+    unsigned int fbo, renderTexture, depthTexture, quadVAO, skyboxVAO;
+
+    unsigned int skyboxTexture;
 };
 // Pointer to state used by game lib
 extern GameState *state; 

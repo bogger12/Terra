@@ -69,6 +69,8 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
 
+    glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  
+
 
     auto modelsView = registry.view<Transform, RenderingData, ModelWrapper>();
     modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
@@ -112,6 +114,19 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
         modelWrapper.model.Draw(*renderingData.shader, true);
     });
+
+    // Render Skybox
+
+    glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content    
+    state->engine_data.shaders[4].use();
+    state->engine_data.shaders[4].setMat4("projection", projectionMatrix);
+    state->engine_data.shaders[4].setMat4("view", skyBoxView);
+    // glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(state->skyboxVAO);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, state->skyboxTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDepthFunc(GL_LESS); // set depth function back to default
+
 };
 
 struct VectorFloatHasher {

@@ -60,12 +60,13 @@ void Game::Init(WindowManager *gameWindowManager)
     state->m_registry.clear();
 
     // Setting Shaders
-    Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
+    // Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
     Shader model_shader1 = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
     Shader model_shader2 = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
     Shader screenQuadShader = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
-    state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2, screenQuadShader};
+    Shader skyboxShader = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
+    state->engine_data.shaders = {light_source_shader, model_shader1, model_shader2, screenQuadShader, skyboxShader};
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     // MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
     // MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
@@ -88,13 +89,13 @@ void Game::Init(WindowManager *gameWindowManager)
 
     
     // float positionRange[] = {-20.0f, 20.0f}; float scaleRange[] = {2.0f, 5.0f};
-    // test_performance_entities(state->m_registry, 200, positionRange, scaleRange, &barrel, &state->engine_data.shaders[2]);
+    // test_performance_entities(state->m_registry, 200, positionRange, scaleRange, &barrel, &state->engine_data.shaders[1]);
 
     const auto light_entity = state->m_registry.create();
     // Create light entity:
     state->m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     state->m_registry.emplace<ModelWrapper>(light_entity, light);
-    state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[1]);
+    state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[0]);
     state->m_registry.emplace<PointLight>(light_entity, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
         glm::vec3(0.5f, 0.5f, 0.5f), 
@@ -106,7 +107,7 @@ void Game::Init(WindowManager *gameWindowManager)
     // const auto light_entity2 = state->m_registry.create();
     // state->m_registry.emplace<Transform>(light_entity2, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     // state->m_registry.emplace<ModelWrapper>(light_entity2, light);
-    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[1]);
+    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[0]);
     // state->m_registry.emplace<SpotLight>(light_entity2, 
     //     glm::vec3(0.2f, 0.2f, 0.2f), 
     //     glm::vec3(0.5f, 0.5f, 0.5f), 
@@ -119,7 +120,7 @@ void Game::Init(WindowManager *gameWindowManager)
     const auto dirlight = state->m_registry.create();
     state->m_registry.emplace<Transform>(dirlight, glm::vec3(0.0f, 5.0f, 0.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     state->m_registry.emplace<ModelWrapper>(dirlight, light);
-    state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[1]);
+    state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[0]);
     state->m_registry.emplace<DirectionalLight>(dirlight, 
         glm::vec3(0.2f, 0.2f, 0.2f), 
         glm::vec3(0.5f, 0.5f, 0.5f), 
@@ -131,27 +132,27 @@ void Game::Init(WindowManager *gameWindowManager)
     // const auto model_test_entity = state->m_registry.create();
     // state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 1.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
-    // state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[2]);
+    // state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[1]);
 
     const auto model_test_entity2 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[1]);
     
     const auto model_test_entity3 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders[1]);
     
     // const auto model_test_entity4 = state->m_registry.create();
     // state->m_registry.emplace<Transform>(model_test_entity4, glm::vec3(-1.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // state->m_registry.emplace<ModelWrapper>(model_test_entity4, heart);
-    // state->m_registry.emplace<RenderingData>(model_test_entity4, &state->engine_data.shaders[2]);
+    // state->m_registry.emplace<RenderingData>(model_test_entity4, &state->engine_data.shaders[1]);
 
     const auto model_test_entity5 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
-    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[1]);
 
 
 
@@ -194,11 +195,28 @@ const int Game::Run(ImGuiContext *hostContext)
 
     ImGui::SetCurrentContext(hostContext);
 
+    // Setting Up Rendering Data
+
     Primitives::SetupQuadVAO(&state->quadVAO);
+    Primitives::SetupSkyboxVAO(&state->skyboxVAO);
+
+    std::vector<std::string> faces
+    {
+        "right.jpg",
+        "left.jpg",
+        "top.jpg",
+        "bottom.jpg",
+        "front.jpg",
+        "back.jpg"
+    };
+    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/skybox/"));
+    
+
     RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
-    glUseProgram(state->engine_data.shaders[4].ID);
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "renderTexture"), 0); // GL_TEXTURE0
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "depthTexture"), 1); // GL_TEXTURE1
+    glUseProgram(state->engine_data.shaders[3].ID);
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "renderTexture"), 0); // GL_TEXTURE0
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "depthTexture"), 1); // GL_TEXTURE1
+
 
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
@@ -281,7 +299,7 @@ void Game::Render()
     // glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
     // glClear(GL_COLOR_BUFFER_BIT);
 
-    state->engine_data.shaders[4].use();  
+    state->engine_data.shaders[3].use();  
     glBindVertexArray(state->quadVAO);
     glDisable(GL_DEPTH_TEST);
     // glDepthMask(GL_FALSE);
@@ -289,10 +307,6 @@ void Game::Render()
     glBindTexture(GL_TEXTURE_2D, state->renderTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, state->depthTexture);
-
-        glUseProgram(state->engine_data.shaders[4].ID);
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "renderTexture"), 0); // GL_TEXTURE0
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders[4].ID, "depthTexture"), 1); // GL_TEXTURE1
 
     glDrawArrays(GL_TRIANGLES, 0, 6);  
 
