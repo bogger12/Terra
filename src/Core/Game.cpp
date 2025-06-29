@@ -211,31 +211,8 @@ const int Game::Run(ImGuiContext *hostContext)
     glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "depthTexture"), 1); // GL_TEXTURE1
 
     // Uniform Buffer Object Stuff
-    unsigned int uniformBlockIndexModelLitMatrices = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "Matrices");
-    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitMatrices, 0); // 0 is the binding block of the ubo
-
-    // unsigned int uboMatrices;
-    glGenBuffers(1, &state->uboMatrices);
-    
-    glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
-    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    
-    glBindBufferRange(GL_UNIFORM_BUFFER, 0, state->uboMatrices, 0, 2 * sizeof(glm::mat4));  // 0 is the binding block of the ubo
-
-    // Directional Light Uniform Buffer
-    unsigned int uniformBlockIndexModelLitDirLight = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "DirLight");
-    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitDirLight, 1); // 1 is the binding block of the ubo
-
-    glGenBuffers(1, &state->uboDirLight);
-    
-    glBindBuffer(GL_UNIFORM_BUFFER, state->uboDirLight);
-    std::cout << "DirectionLight size: " << sizeof(DirectionalLight) << std::endl;
-    glBufferData(GL_UNIFORM_BUFFER, 64, NULL, GL_DYNAMIC_DRAW); // Size of DirLight struct is 64
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    
-    glBindBufferRange(GL_UNIFORM_BUFFER, 1, state->uboDirLight, 0, 64);  // 1 is the binding block of the ubo
-
+    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4), state->engine_data.shaders[1].ID, "Matrices", 0);
+    Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders[1].ID, "DirLight", 1);
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     // TextureSystem::LoadTextures(state->engine_data.textures);

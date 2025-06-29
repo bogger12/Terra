@@ -98,18 +98,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         modelMatrix *= transform.rotation; // Rotate
         modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale        
         renderingData.shader->setMat4("model", modelMatrix);
-        
-        // // LIGHTS
-
-        // int pointLightCount = 0; int spotLightCount = 0;
-        // for (auto entity : lightsView) {
-        //     Transform &transform = registry.get<Transform>(entity);
-        //     if (PointLight *p = registry.try_get<PointLight>(entity)) p->SetShaderValues(renderingData.shader, transform.position, pointLightCount++);
-        //     else if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) d->SetShaderValues(renderingData.shader, transform.position);
-        //     else if (SpotLight *s = registry.try_get<SpotLight>(entity)) s->SetShaderValues(renderingData.shader, transform.position, spotLightCount++);
-        // }
-        // // renderingData.shader->setInt("numPointLights", pointLightCount);
-        // // renderingData.shader->setInt("numSpotLights", spotLightCount);
 
         renderingData.shader->setFloat("shininess", 32);
         
