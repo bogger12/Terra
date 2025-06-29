@@ -108,9 +108,9 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     // Render Skybox
 
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content    
-    state->engine_data.shaders[4].use();
-    state->engine_data.shaders[4].setMat4("projection", projectionMatrix);
-    state->engine_data.shaders[4].setMat4("view", skyBoxView);
+    state->engine_data.shaders["skybox"].use();
+    state->engine_data.shaders["skybox"].setMat4("projection", projectionMatrix);
+    state->engine_data.shaders["skybox"].setMat4("view", skyBoxView);
     // glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(state->skyboxVAO);
     glBindTexture(GL_TEXTURE_CUBE_MAP, state->skyboxTexture);

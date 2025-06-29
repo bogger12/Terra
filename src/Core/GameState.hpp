@@ -11,7 +11,7 @@
 struct EngineData 
 {
     // Engine Data
-    std::vector<Shader> shaders;
+    std::unordered_map<std::string, Shader> shaders;
     std::vector<MaterialTexture> textures;
 };
 

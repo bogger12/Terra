@@ -14,7 +14,7 @@
 class Shader
 {
 public:
-    unsigned int ID;
+    unsigned int ID = 0;
     std::string vertexPath; 
     std::string fragmentPath;
     Shader() {};
@@ -70,6 +70,7 @@ public:
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
         // shader Program
+        if (ID) glDeleteProgram(ID);
         ID = glCreateProgram();
         std::cout << "Created Shader Program " << ID << std::endl;
         glAttachShader(ID, vertex);
