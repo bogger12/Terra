@@ -97,9 +97,9 @@ void Game::Init(WindowManager *gameWindowManager)
     state->m_registry.emplace<ModelWrapper>(light_entity, light);
     state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[0]);
     state->m_registry.emplace<PointLight>(light_entity, 
-        glm::vec3(0.2f, 0.2f, 0.2f), 
-        glm::vec3(0.5f, 0.5f, 0.5f), 
-        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
         1.0f, 0.09f, 0.032f
     );
     state->m_registry.emplace<LightTag>(light_entity);
@@ -109,10 +109,10 @@ void Game::Init(WindowManager *gameWindowManager)
     // state->m_registry.emplace<ModelWrapper>(light_entity2, light);
     // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[0]);
     // state->m_registry.emplace<SpotLight>(light_entity2, 
-    //     glm::vec3(0.2f, 0.2f, 0.2f), 
-    //     glm::vec3(0.5f, 0.5f, 0.5f), 
-    //     glm::vec3(1.0f, 1.0f, 1.0f),
-    //     glm::vec3(-5.0f, 0.0f, 2.0f),
+    //     glm::vec4(0.2f, 0.2f, 0.2f), 
+    //     glm::vec4(0.5f, 0.5f, 0.5f), 
+    //     glm::vec4(1.0f, 1.0f, 1.0f),
+    //     glm::vec4(-5.0f, 0.0f, 2.0f),
     //     12.5f, 17.5f
     // );
     // state->m_registry.emplace<LightTag>(light_entity2);
@@ -122,10 +122,10 @@ void Game::Init(WindowManager *gameWindowManager)
     state->m_registry.emplace<ModelWrapper>(dirlight, light);
     state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[0]);
     state->m_registry.emplace<DirectionalLight>(dirlight, 
-        glm::vec3(0.2f, 0.2f, 0.2f), 
-        glm::vec3(0.5f, 0.5f, 0.5f), 
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(0.3f, -1.0f, 0.2f)
+        glm::vec4(0.3f, -1.0f, 0.2f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
     );
     state->m_registry.emplace<LightTag>(dirlight);
 
@@ -201,14 +201,7 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetupSkyboxVAO(&state->skyboxVAO);
 
     std::vector<std::string> faces
-    {
-        "right.jpg",
-        "left.jpg",
-        "top.jpg",
-        "bottom.jpg",
-        "front.jpg",
-        "back.jpg"
-    };
+    { "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg" };
     state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/skybox/"));
     
 
@@ -217,6 +210,31 @@ const int Game::Run(ImGuiContext *hostContext)
     glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "renderTexture"), 0); // GL_TEXTURE0
     glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "depthTexture"), 1); // GL_TEXTURE1
 
+    // Uniform Buffer Object Stuff
+    unsigned int uniformBlockIndexModelLitMatrices = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "Matrices");
+    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitMatrices, 0); // 0 is the binding block of the ubo
+
+    // unsigned int uboMatrices;
+    glGenBuffers(1, &state->uboMatrices);
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, state->uboMatrices, 0, 2 * sizeof(glm::mat4));  // 0 is the binding block of the ubo
+
+    // Directional Light Uniform Buffer
+    unsigned int uniformBlockIndexModelLitDirLight = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "DirLight");
+    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitDirLight, 1); // 1 is the binding block of the ubo
+
+    glGenBuffers(1, &state->uboDirLight);
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboDirLight);
+    std::cout << "DirectionLight size: " << sizeof(DirectionalLight) << std::endl;
+    glBufferData(GL_UNIFORM_BUFFER, 64, NULL, GL_DYNAMIC_DRAW); // Size of DirLight struct is 64
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, state->uboDirLight, 0, 64);  // 1 is the binding block of the ubo
 
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values

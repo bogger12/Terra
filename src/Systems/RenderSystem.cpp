@@ -69,6 +69,19 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
 
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix));
+    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(viewMatrix));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    for (auto entity : lightsView) {
+        if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) {
+            glBindBuffer(GL_UNIFORM_BUFFER, state->uboDirLight);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(DirectionalLight), d);
+            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        }
+    }
+
     glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  
 
 
@@ -79,8 +92,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         glUseProgram(renderingData.shader->ID);
 
         renderingData.shader->setVec3("viewPos", camera.Position);
-        renderingData.shader->setMat4("projection", projectionMatrix);
-        renderingData.shader->setMat4("view", viewMatrix);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         modelMatrix = glm::translate(modelMatrix, transform.position); // Translate
@@ -89,15 +100,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         renderingData.shader->setMat4("model", modelMatrix);
         
         // // LIGHTS
-        
-        for (auto entity : lightsView) {
-            if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) {
-                renderingData.shader->setVec3("dirLight.ambient", d->ambient);
-                renderingData.shader->setVec3("dirLight.diffuse", d->diffuse);
-                renderingData.shader->setVec3("dirLight.specular", d->specular);
-                renderingData.shader->setVec3("dirLight.direction", d->direction);
-            }
-        }
 
         // int pointLightCount = 0; int spotLightCount = 0;
         // for (auto entity : lightsView) {
