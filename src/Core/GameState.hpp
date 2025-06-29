@@ -36,6 +36,14 @@ struct GameState
     float lastX = 800.0f / 2.0;
     float lastY = 600.0 / 2.0;
     bool useMouse = true;
+
+    // Rendering
+
+    unsigned int fbo, renderTexture, depthTexture, quadVAO, skyboxVAO;
+
+    unsigned int skyboxTexture;
+
+    unsigned int uboMatrices, uboDirLight;
 };
 // Pointer to state used by game lib
 extern GameState *state; 

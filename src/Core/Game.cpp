@@ -12,6 +12,7 @@
 #include <camera.h>
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
+#include "../Utilities/Primitives.hpp"
 #include "../Systems/GUISystem.hpp"
 #include "GameState.hpp"
 #include "OSMethods.hpp"
@@ -31,6 +32,7 @@ GameState* state;
 
 // For time testing
 std::map<std::string, float> time_map;
+
 
 
 // NEEDED FOR DYNAMIC LINKING SYMBOL LOOKUP
@@ -58,11 +60,13 @@ void Game::Init(WindowManager *gameWindowManager)
     state->m_registry.clear();
 
     // Setting Shaders
-    Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
+    // Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     Shader light_source_shader = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
     Shader model_shader1 = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
     Shader model_shader2 = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
-    state->engine_data.shaders = {default_shader, light_source_shader, model_shader1, model_shader2};
+    Shader screenQuadShader = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
+    Shader skyboxShader = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
+    state->engine_data.shaders = {light_source_shader, model_shader1, model_shader2, screenQuadShader, skyboxShader};
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
     // MaterialTexture container2 = MaterialTexture{asset("/textures/container2.png"), GL_RGBA};
     // MaterialTexture container2_specular = MaterialTexture{asset("/textures/container2_specular.png"), GL_RGBA};
@@ -85,17 +89,17 @@ void Game::Init(WindowManager *gameWindowManager)
 
     
     // float positionRange[] = {-20.0f, 20.0f}; float scaleRange[] = {2.0f, 5.0f};
-    // test_performance_entities(state->m_registry, 200, positionRange, scaleRange, &barrel, &state->engine_data.shaders[2]);
+    // test_performance_entities(state->m_registry, 200, positionRange, scaleRange, &barrel, &state->engine_data.shaders[1]);
 
     const auto light_entity = state->m_registry.create();
     // Create light entity:
     state->m_registry.emplace<Transform>(light_entity, glm::vec3(1.2f, 1.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     state->m_registry.emplace<ModelWrapper>(light_entity, light);
-    state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[1]);
+    state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders[0]);
     state->m_registry.emplace<PointLight>(light_entity, 
-        glm::vec3(0.2f, 0.2f, 0.2f), 
-        glm::vec3(0.5f, 0.5f, 0.5f), 
-        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
         1.0f, 0.09f, 0.032f
     );
     state->m_registry.emplace<LightTag>(light_entity);
@@ -103,12 +107,12 @@ void Game::Init(WindowManager *gameWindowManager)
     // const auto light_entity2 = state->m_registry.create();
     // state->m_registry.emplace<Transform>(light_entity2, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     // state->m_registry.emplace<ModelWrapper>(light_entity2, light);
-    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[1]);
+    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders[0]);
     // state->m_registry.emplace<SpotLight>(light_entity2, 
-    //     glm::vec3(0.2f, 0.2f, 0.2f), 
-    //     glm::vec3(0.5f, 0.5f, 0.5f), 
-    //     glm::vec3(1.0f, 1.0f, 1.0f),
-    //     glm::vec3(-5.0f, 0.0f, 2.0f),
+    //     glm::vec4(0.2f, 0.2f, 0.2f), 
+    //     glm::vec4(0.5f, 0.5f, 0.5f), 
+    //     glm::vec4(1.0f, 1.0f, 1.0f),
+    //     glm::vec4(-5.0f, 0.0f, 2.0f),
     //     12.5f, 17.5f
     // );
     // state->m_registry.emplace<LightTag>(light_entity2);
@@ -116,39 +120,39 @@ void Game::Init(WindowManager *gameWindowManager)
     const auto dirlight = state->m_registry.create();
     state->m_registry.emplace<Transform>(dirlight, glm::vec3(0.0f, 5.0f, 0.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
     state->m_registry.emplace<ModelWrapper>(dirlight, light);
-    state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[1]);
+    state->m_registry.emplace<RenderingData>(dirlight, &state->engine_data.shaders[0]);
     state->m_registry.emplace<DirectionalLight>(dirlight, 
-        glm::vec3(0.2f, 0.2f, 0.2f), 
-        glm::vec3(0.5f, 0.5f, 0.5f), 
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(0.3f, -1.0f, 0.2f)
+        glm::vec4(0.3f, -1.0f, 0.2f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
     );
     state->m_registry.emplace<LightTag>(dirlight);
 
     // const auto model_test_entity = state->m_registry.create();
     // state->m_registry.emplace<Transform>(model_test_entity, glm::vec3(0.0f, 1.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // state->m_registry.emplace<ModelWrapper>(model_test_entity, backpack);
-    // state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[2]);
+    // state->m_registry.emplace<RenderingData>(model_test_entity, &state->engine_data.shaders[1]);
 
     const auto model_test_entity2 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders[1]);
     
     const auto model_test_entity3 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders[1]);
     
     // const auto model_test_entity4 = state->m_registry.create();
     // state->m_registry.emplace<Transform>(model_test_entity4, glm::vec3(-1.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // state->m_registry.emplace<ModelWrapper>(model_test_entity4, heart);
-    // state->m_registry.emplace<RenderingData>(model_test_entity4, &state->engine_data.shaders[2]);
+    // state->m_registry.emplace<RenderingData>(model_test_entity4, &state->engine_data.shaders[1]);
 
     const auto model_test_entity5 = state->m_registry.create();
     state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
-    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[2]);
+    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders[1]);
 
 
 
@@ -173,6 +177,11 @@ void Game::Init(WindowManager *gameWindowManager)
     glEnable(GL_CULL_FACE); 
     // glCullFace(GL_FRONT); 
 
+    // Because its a retina display wtf?? Gets reset on size change
+    windowManager->width *= 2;
+    windowManager->height *= 2;
+    glViewport(0, 0, windowManager->width, windowManager->height);
+
 }
 
 const int Game::Run(ImGuiContext *hostContext)
@@ -185,6 +194,48 @@ const int Game::Run(ImGuiContext *hostContext)
     GLFWwindow *window = windowManager->GetWindow();
 
     ImGui::SetCurrentContext(hostContext);
+
+    // Setting Up Rendering Data
+
+    Primitives::SetupQuadVAO(&state->quadVAO);
+    Primitives::SetupSkyboxVAO(&state->skyboxVAO);
+
+    std::vector<std::string> faces
+    { "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg" };
+    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/skybox/"));
+    
+
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
+    glUseProgram(state->engine_data.shaders[3].ID);
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "renderTexture"), 0); // GL_TEXTURE0
+    glUniform1i(glGetUniformLocation(state->engine_data.shaders[3].ID, "depthTexture"), 1); // GL_TEXTURE1
+
+    // Uniform Buffer Object Stuff
+    unsigned int uniformBlockIndexModelLitMatrices = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "Matrices");
+    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitMatrices, 0); // 0 is the binding block of the ubo
+
+    // unsigned int uboMatrices;
+    glGenBuffers(1, &state->uboMatrices);
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
+    glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindBufferRange(GL_UNIFORM_BUFFER, 0, state->uboMatrices, 0, 2 * sizeof(glm::mat4));  // 0 is the binding block of the ubo
+
+    // Directional Light Uniform Buffer
+    unsigned int uniformBlockIndexModelLitDirLight = glGetUniformBlockIndex(state->engine_data.shaders[1].ID, "DirLight");
+    glUniformBlockBinding(state->engine_data.shaders[1].ID, uniformBlockIndexModelLitDirLight, 1); // 1 is the binding block of the ubo
+
+    glGenBuffers(1, &state->uboDirLight);
+    
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboDirLight);
+    std::cout << "DirectionLight size: " << sizeof(DirectionalLight) << std::endl;
+    glBufferData(GL_UNIFORM_BUFFER, 64, NULL, GL_DYNAMIC_DRAW); // Size of DirLight struct is 64
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    
+    glBindBufferRange(GL_UNIFORM_BUFFER, 1, state->uboDirLight, 0, 64);  // 1 is the binding block of the ubo
+
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     // TextureSystem::LoadTextures(state->engine_data.textures);
@@ -252,10 +303,36 @@ int Game::Events(float deltaTime)
 
 void Game::Render()
 {
+    // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+    glBindFramebuffer(GL_FRAMEBUFFER, state->fbo);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+    glEnable(GL_DEPTH_TEST);
+    // glDepthMask(GL_TRUE);
+
+    RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+    // glClear(GL_COLOR_BUFFER_BIT);
+
+    state->engine_data.shaders[3].use();  
+    glBindVertexArray(state->quadVAO);
+    glDisable(GL_DEPTH_TEST);
+    // glDepthMask(GL_FALSE);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, state->renderTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, state->depthTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);  
+
+
     // render
     // ------
-    glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    // glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
     auto start = std::chrono::high_resolution_clock::now();
 
     // Start the Dear ImGui frame
@@ -269,7 +346,7 @@ void Game::Render()
     time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
     start = std::chrono::high_resolution_clock::now();
-    RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+    // RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
     stop = std::chrono::high_resolution_clock::now();
 
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
@@ -303,6 +380,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     windowManager->SetSize(width, height);
+    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
 }
 
 // glfw: whenever the mouse moves, this callback is called

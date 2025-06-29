@@ -4,13 +4,21 @@
 
 // LIGHTS
 
-struct DirLight {
-    vec3 direction;
+// struct DirLight {
+//     vec3 direction;
   
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-};  
+//     vec3 ambient;
+//     vec3 diffuse;
+//     vec3 specular;
+// };  
+
+layout (std140) uniform DirLight
+{
+    vec3 dirdirection;
+    vec3 dirambient;
+    vec3 dirdiffuse;
+    vec3 dirspecular;
+};
 // struct PointLight {
 //     vec3 position;
     
@@ -34,7 +42,7 @@ struct DirLight {
 //     vec3 specular;
 // };
 
-uniform DirLight dirLight;
+// uniform DirLight dirLight;
 
 // #define MAX_POINT_LIGHTS 2
 // uniform PointLight pointLights[MAX_POINT_LIGHTS];
@@ -59,6 +67,8 @@ uniform sampler2D texture_diffuse1;
 // vec3 diffusecolor;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
+
+uniform samplerCube reflectionMap;
 uniform float shininess;
 
 uniform vec3 viewPos;
@@ -72,7 +82,7 @@ in vec2 TexCoords;
 in mat3 TBN;
 
 
-vec3 CalcDirectionalLight(DirLight light, vec3 normal, vec3 viewDir);
+vec3 CalcDirectionalLight(vec3 normal, vec3 viewDir);
 // vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 // vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
@@ -120,9 +130,23 @@ void main()
 
     // define an output color value
     vec3 result = vec3(0.0);
+    
+    // Reflection test
+    // if (gl_FragCoord.x > 1280) {
+    //     float ratio = 1.00 / 1.52;
+    //     vec3 R = reflect(-viewDir, normal);
+    //     // // vec3 R = refract(-viewDir, normal, ratio);
+    //     // FragColor = vec4(texture(reflectionMap, R).rgb, 1.0);
+    //     return;
+    // } else {
+    //     result += CalcDirectionalLight(normal, viewDir);
+    //     FragColor = vec4(result, 1.0);
+    //     return;
+    // }
+    // FragColor = vec4(vec3(gl_FragCoord.x > 800), 1.0);
 
     // phase 1: Directional lighting
-    result += CalcDirectionalLight(dirLight, normal, viewDir);
+    result += CalcDirectionalLight(normal, viewDir);
     // phase 2: Point lights
     // for(int i = 0; i < numPointLights; i++)
     //     result += CalcPointLight(pointLights[i], normal, FragPos, viewDir);
@@ -135,18 +159,18 @@ void main()
 
 
 
-vec3 CalcDirectionalLight(DirLight light, vec3 normal, vec3 viewDir)
+vec3 CalcDirectionalLight(vec3 normal, vec3 viewDir)
 {
-    vec3 lightDir = normalize(-light.direction);
+    vec3 lightDir = normalize(-dirdirection);
     // diffuse shading
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     // combine results
-    vec3 ambient  = light.ambient  * getAmbient();
-    vec3 diffuse  = light.diffuse  * diff * getDiffuse();
-    vec3 specular = light.specular * spec * getSpecular();
+    vec3 ambient  = dirambient  * getAmbient();
+    vec3 diffuse  = dirdiffuse  * diff * getDiffuse();
+    vec3 specular = dirspecular * spec;
     return (ambient + diffuse + specular);
 }  
 

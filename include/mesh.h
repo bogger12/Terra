@@ -67,8 +67,9 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader &shader) 
+    void Draw(Shader &shader, bool assignTextures, unsigned int reflectionMap=-1) 
     {   
+        bool useReflectionMap = reflectionMap != -1;
         bool useColor = textures.size()==0;
         shader.setBool("useColor", useColor);
         if (useColor) {
@@ -76,15 +77,22 @@ public:
             shader.setVec3("colorMat.specular", colorMaterial.Specular);
             shader.setVec3("colorMat.ambient", colorMaterial.Ambient);
             shader.setFloat("shininess", colorMaterial.Shininess);
-        } else {
+        } else if (assignTextures) {
             shader.setVec3("colorMat.diffuse", glm::vec3(0.0));
+
+            if (useReflectionMap) {
+                glActiveTexture(GL_TEXTURE0);
+                glUniform1i(glGetUniformLocation(shader.ID, "reflectionMap"), 0);
+                glBindTexture(GL_TEXTURE_CUBE_MAP, reflectionMap);
+            }
+
 
             // bind appropriate textures
             unsigned int diffuseNr  = 1;
             unsigned int specularNr = 1;
             unsigned int normalNr   = 1;
             unsigned int heightNr   = 1;
-            for(unsigned int i = 0; i < textures.size(); i++)
+            for(unsigned int i = useReflectionMap; i < textures.size(); i++)
             {
                 glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
                 // retrieve texture number (the N in diffuse_textureN)
