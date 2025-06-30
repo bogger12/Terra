@@ -65,13 +65,14 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     //     float time = glfwGetTime();
     //     transform.position = glm::vec3(sin(time), transform.position.y, cos(time));
     // });
-
+    
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
 
     glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix));
     glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(viewMatrix));
+    glBufferSubData(GL_UNIFORM_BUFFER, 2*sizeof(glm::mat4), 16, glm::value_ptr(camera.Position));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     for (auto entity : lightsView) {
@@ -89,9 +90,9 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
         // auto &transform = meshesView.get<Transform>(entity);
         // auto &modelWrapper = meshesView.get<ModelWrapper>(entity);
-        glUseProgram(renderingData.shader->ID);
+        renderingData.shader->use();
 
-        renderingData.shader->setVec3("viewPos", camera.Position);
+        // renderingData.shader->setVec3("viewPos", camera.Position);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         modelMatrix = glm::translate(modelMatrix, transform.position); // Translate
@@ -102,7 +103,7 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         renderingData.shader->setFloat("shininess", 32);
         
 
-        modelWrapper.model.Draw(*renderingData.shader, true);
+        modelWrapper.model.Draw(*renderingData.shader, -1);
     });
 
     // Render Skybox

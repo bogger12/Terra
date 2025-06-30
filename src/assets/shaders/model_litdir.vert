@@ -15,6 +15,7 @@ layout (std140) uniform Matrices
 {
     mat4 projection;
     mat4 view;
+	vec3 viewPos;
 };
 uniform mat4 model;
 
