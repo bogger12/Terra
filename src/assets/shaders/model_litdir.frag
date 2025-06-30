@@ -12,6 +12,13 @@
 //     vec3 specular;
 // };  
 
+layout (std140) uniform Matrices
+{
+    mat4 projection;
+    mat4 view;
+	vec3 viewPos;
+};
+
 layout (std140) uniform DirLight
 {
     vec3 dirdirection;
@@ -19,6 +26,8 @@ layout (std140) uniform DirLight
     vec3 dirdiffuse;
     vec3 dirspecular;
 };
+
+
 // struct PointLight {
 //     vec3 position;
     
@@ -68,10 +77,10 @@ uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform sampler2D texture_normal1;
 
-uniform samplerCube reflectionMap;
+// uniform samplerCube reflectionMap;
 uniform float shininess;
 
-uniform vec3 viewPos;
+// uniform vec3 viewPos;
 
 
 out vec4 FragColor;

@@ -64,7 +64,7 @@ void Game::Init(WindowManager *gameWindowManager)
     // Setting Shaders
     // Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     shaders["light"] = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
-    shaders["model"] = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
+    shaders["model"] = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"), asset("/shaders/explode.geom"));
     shaders["model2"] = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
     shaders["screenquad"] = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
     shaders["skybox"] = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
@@ -206,7 +206,7 @@ const int Game::Run(ImGuiContext *hostContext)
     glUniform1i(glGetUniformLocation(state->engine_data.shaders["screenquad"].ID, "depthTexture"), 1); // GL_TEXTURE1
 
     // Uniform Buffer Object Stuff
-    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4), state->engine_data.shaders["model"].ID, "Matrices", 0);
+    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, state->engine_data.shaders["model"].ID, "Matrices", 0);
     Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders["model"].ID, "DirLight", 1);
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
@@ -277,6 +277,11 @@ void Game::Render()
 {
     // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
     auto start = std::chrono::high_resolution_clock::now();
 
     glBindFramebuffer(GL_FRAMEBUFFER, state->fbo);
@@ -284,6 +289,8 @@ void Game::Render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
     glEnable(GL_DEPTH_TEST);
     // glDepthMask(GL_TRUE);
+    state->engine_data.shaders["model"].use(); 
+    state->engine_data.shaders["model"].setFloat("time", glfwGetTime());  
 
     RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
 
@@ -306,16 +313,8 @@ void Game::Render()
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
 
-    // render
-    // ------
-    // glClearColor(state->clear_color.x * state->clear_color.w, state->clear_color.y * state->clear_color.w, state->clear_color.z * state->clear_color.w, state->clear_color.w);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
     start = std::chrono::high_resolution_clock::now();
 
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
     if (state->show_demo_window) ImGui::ShowDemoWindow(); // Show demo window! :)
 
     GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, *windowManager, &reload_shaders, &Init);
