@@ -65,6 +65,7 @@ void Game::Init(WindowManager *gameWindowManager)
     // Shader default_shader = Shader(asset("/shaders/vert_lit.vert"), asset("/shaders/frag_lit.frag"));
     shaders["light"] = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
     shaders["model"] = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
+    shaders["instanced"] = Shader(asset("/shaders/model_litdirinstanced.vert"), asset("/shaders/model_litdirinstanced.frag"));
     shaders["model2"] = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
     shaders["screenquad"] = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
     shaders["skybox"] = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
@@ -75,10 +76,12 @@ void Game::Init(WindowManager *gameWindowManager)
     // MaterialTexture awesomeface = MaterialTexture{asset("/textures/awesomeface.png"), GL_RGBA};
     // state->engine_data.textures = {container1, container2, container2_specular, awesomeface};
 
-    // Model backpack = Model(asset("/models/backpack/backpack.obj"));
-    Model barrel = Model(asset("/models/barrel/barrel.obj"));
     Model light = Model(asset("/models/light/light.obj"));
-    Model room = Model(asset("/models/Isometric_Room_Blend/Isometric Room.obj"));
+    // Model backpack = Model(asset("/models/backpack/backpack.obj"));
+    // Model barrel = Model(asset("/models/barrel/barrel.obj"));
+    // Model room = Model(asset("/models/Isometric_Room_Blend/Isometric Room.obj"));
+    Model planet = Model(asset("/models/planet/planet.obj"));
+    state->rock = new Model(asset("/models/rock/rock.obj"));
 
 
 
@@ -130,22 +133,26 @@ void Game::Init(WindowManager *gameWindowManager)
     
 
 
-    const auto model_test_entity2 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders["model"]);
+    // const auto model_test_entity2 = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
+    // state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders["model"]);
     
-    const auto model_test_entity3 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
-    state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders["model"]);
+    // const auto model_test_entity3 = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
+    // state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders["model"]);
     
 
-    const auto model_test_entity5 = state->m_registry.create();
-    state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
-    state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders["model"]);
+    // const auto model_test_entity5 = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
+    // state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders["model"]);
 
+    const auto planet_entity = state->m_registry.create();
+    state->m_registry.emplace<Transform>(planet_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(planet_entity, planet);
+    state->m_registry.emplace<RenderingData>(planet_entity, &state->engine_data.shaders["model"]);
 
     // float positionRange[] = {-20.0f, 20.0f}; float scaleRange[] = {2.0f, 5.0f};
     // test_performance_entities(state->m_registry, 100, positionRange, scaleRange, &room, &state->engine_data.shaders["model"]);
@@ -153,7 +160,7 @@ void Game::Init(WindowManager *gameWindowManager)
 
 
     // Set Game Camera
-    state->camera = Camera(glm::vec3(0.0f,0.0f,3.0f));
+    state->camera = Camera(glm::vec3(0.0f,0.0f,10.0f));
 
     // Assign events to systems.
     // m_dispatcher.sink<KeyDown>().connect<&MoveSystem::on_key_down>(m_move_system);
@@ -195,9 +202,11 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetupQuadVAO(&state->quadVAO);
     Primitives::SetupSkyboxVAO(&state->skyboxVAO);
 
+    Primitives::SetupTest();
+
     std::vector<std::string> faces
-    { "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg" };
-    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/skybox/"));
+    { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
+    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/spacebox/"), GL_RGBA);
     
 
     RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
@@ -208,6 +217,9 @@ const int Game::Run(ImGuiContext *hostContext)
     // Uniform Buffer Object Stuff
     Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, state->engine_data.shaders["model"].ID, "Matrices", 0);
     Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders["model"].ID, "DirLight", 1);
+
+    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, state->engine_data.shaders["instanced"].ID, "Matrices", 0);
+    Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders["instanced"].ID, "DirLight", 1);
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     // TextureSystem::LoadTextures(state->engine_data.textures);
@@ -296,7 +308,7 @@ void Game::Render()
     // glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
     // glClear(GL_COLOR_BUFFER_BIT);
 
-    state->engine_data.shaders["screenquad"].use();  
+    state->engine_data.shaders["screenquad"].use();
     glBindVertexArray(state->quadVAO);
     glDisable(GL_DEPTH_TEST);
     // glDepthMask(GL_FALSE);

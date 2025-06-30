@@ -7,6 +7,7 @@
 #include "WindowManager.hpp"
 #include <entt/entt.hpp>
 #include <camera.h>
+#include "model.h"
 
 struct EngineData 
 {
@@ -44,6 +45,8 @@ struct GameState
     unsigned int skyboxTexture;
 
     unsigned int uboMatrices, uboDirLight;
+
+    Model *rock;
 };
 // Pointer to state used by game lib
 extern GameState *state; 

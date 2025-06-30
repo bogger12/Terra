@@ -5,7 +5,7 @@
 #include "../Core/GameState.hpp"
 
 #include "RenderSystem.hpp"
-
+void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
 void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture, unsigned int *depthTexture) {
     // unsigned int fbo;
@@ -106,6 +106,9 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
         modelWrapper.model.Draw(*renderingData.shader, -1);
     });
 
+    
+    RenderInstanced(viewMatrix, projectionMatrix);
+
     // Render Skybox
 
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content    
@@ -119,6 +122,22 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     glDepthFunc(GL_LESS); // set depth function back to default
 
 };
+
+
+
+void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
+    unsigned int amount = 10000;
+    // draw meteorites
+    state->engine_data.shaders["instanced"].use();
+
+    for(unsigned int i = 0; i < state->rock->meshes.size(); i++)
+    {
+        glBindVertexArray(state->rock->meshes[i].VAO);
+        glDrawElementsInstanced(
+            GL_TRIANGLES, state->rock->meshes[i].indices.size(), GL_UNSIGNED_INT, 0, amount
+        );
+    }
+}
 
 struct VectorFloatHasher {
     std::size_t operator()(std::vector<float> const& vec) const {

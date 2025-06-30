@@ -120,12 +120,20 @@ void main()
 {   
     // Properties
     vec3 normal;
+    //     FragColor = vec4(dirdirection, 1.0);
+    // return;
+
+    
     if (useColor) normal = normalize(Normal);
     else {  
         normal = texture(texture_normal1, TexCoords).rgb; // use normal map
-        // transform normal vector to range [-1,1]
-        normal = normal * 2.0 - 1.0;  // this normal is in tangent space
-        normal = normalize(TBN * normal); 
+        if (length(normal)<=1.0) normal = normalize(Normal); 
+        else {
+            // transform normal vector to range [-1,1]
+            normal = normal * 2.0 - 1.0;  // this normal is in tangent space
+            normal = normalize(TBN * normal); 
+        }
+
     }
 
     float viewDistance = length(viewPos - FragPos);
