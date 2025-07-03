@@ -4,6 +4,7 @@
 
 ##### The Engine In Action:
 ![alt text](images/terra-example.png "Example Image")
+![alt text](images/terra-instancing.png "Instancing Example")
 
 
 ## Installation:

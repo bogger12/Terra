@@ -89,6 +89,8 @@ in vec3 Normal;
 in vec3 FragPos;  
 in vec2 TexCoords;
 in mat3 TBN;
+in float FresnelEffect;
+in vec3 ViewDir;
 
 
 vec3 CalcDirectionalLight(vec3 normal, vec3 viewDir);
@@ -120,12 +122,20 @@ void main()
 {   
     // Properties
     vec3 normal;
+    //     FragColor = vec4(dirdirection, 1.0);
+    // return;
+
+    
     if (useColor) normal = normalize(Normal);
     else {  
         normal = texture(texture_normal1, TexCoords).rgb; // use normal map
-        // transform normal vector to range [-1,1]
-        normal = normal * 2.0 - 1.0;  // this normal is in tangent space
-        normal = normalize(TBN * normal); 
+        if (length(normal)<=1.0) normal = normalize(Normal); 
+        else {
+            // transform normal vector to range [-1,1]
+            normal = normal * 2.0 - 1.0;  // this normal is in tangent space
+            normal = normalize(TBN * normal); 
+        }
+
     }
 
     float viewDistance = length(viewPos - FragPos);
@@ -135,10 +145,10 @@ void main()
     // FragColor = vec4(vec3(depth), 1.0);
     // return;
 
-    vec3 viewDir = normalize(viewPos - FragPos);
-
     // define an output color value
     vec3 result = vec3(0.0);
+
+    result += FresnelEffect * vec3(0.2);
     
     // Reflection test
     // if (gl_FragCoord.x > 1280) {
@@ -155,7 +165,7 @@ void main()
     // FragColor = vec4(vec3(gl_FragCoord.x > 800), 1.0);
 
     // phase 1: Directional lighting
-    result += CalcDirectionalLight(normal, viewDir);
+    result += CalcDirectionalLight(normal, ViewDir);
     // phase 2: Point lights
     // for(int i = 0; i < numPointLights; i++)
     //     result += CalcPointLight(pointLights[i], normal, FragPos, viewDir);

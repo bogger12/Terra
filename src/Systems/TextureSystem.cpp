@@ -46,7 +46,7 @@ unsigned int LoadTextureFromPath(std::string texture_path, int &width, int &heig
     return textureID;
 }
 
-unsigned int TextureSystem::LoadCubemap(std::vector<std::string> faces, std::string directory)
+unsigned int TextureSystem::LoadCubemap(std::vector<std::string> faces, std::string directory, GLint format)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -59,13 +59,13 @@ unsigned int TextureSystem::LoadCubemap(std::vector<std::string> faces, std::str
         if (data)
         {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
-                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+                         0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data
             );
             stbi_image_free(data);
         }
         else
         {
-            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            std::cout << "Cubemap tex failed to load at path: " << (directory+faces[i]).c_str() << std::endl;
             stbi_image_free(data);
         }
     }
