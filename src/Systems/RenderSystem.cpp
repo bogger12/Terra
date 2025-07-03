@@ -58,16 +58,12 @@ void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *f
 void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera)
 {   
     
-    auto lightsView = registry.view<Transform, LightTag>();
-
-    // Move lights
-    // lightsView.each([&](auto& transform) {
-    //     float time = glfwGetTime();
-    //     transform.position = glm::vec3(sin(time), transform.position.y, cos(time));
-    // });
+    auto lightsView = registry.view<Transform, ModelWrapper, LightTag>();
     
     glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
+    glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  // Remove translation
+
 
     glBindBuffer(GL_UNIFORM_BUFFER, state->uboMatrices);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projectionMatrix));
@@ -75,29 +71,59 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     glBufferSubData(GL_UNIFORM_BUFFER, 2*sizeof(glm::mat4), 16, glm::value_ptr(camera.Position));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+
+    // Dir = 64, Point = 64, Spot = 80 (Without extra transform)
+    // Dir = 64, Point = 80, Spot = 96 (With extra transform)
+    // 64 + 80 * 4 + 96 * 4 = 768 + vec3 numLights (16) = 784
+
+    static_assert(sizeof(DirectionalLight) == 64);
+    static_assert(sizeof(PointLight) == 64);
+    static_assert(sizeof(SpotLight) == 80);
+    unsigned int dirLight = 0, pointLights = 0, spotLights = 0;
+    unsigned int max_lights = 4;
+    glBindBuffer(GL_UNIFORM_BUFFER, state->uboLights);
     for (auto entity : lightsView) {
+        auto& transform = registry.get<Transform>(entity);
+        auto& modelWrapper = registry.get<ModelWrapper>(entity);
+
         if (DirectionalLight *d = registry.try_get<DirectionalLight>(entity)) {
-            glBindBuffer(GL_UNIFORM_BUFFER, state->uboDirLight);
-            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(DirectionalLight), d);
-            glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            if (dirLight >= 1) continue;
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, d);
+            dirLight++;
+        } else if (PointLight *p = registry.try_get<PointLight>(entity)) {
+            if (pointLights >= max_lights) continue;
+            glBufferSubData(GL_UNIFORM_BUFFER, 64+(pointLights)*80, 16, glm::value_ptr(transform.position));
+            glBufferSubData(GL_UNIFORM_BUFFER, 64+(pointLights)*80+16, 64, p);
+            pointLights++;
+        } else if (SpotLight *s = registry.try_get<SpotLight>(entity)) {
+            if (spotLights >= max_lights) continue;
+            glBufferSubData(GL_UNIFORM_BUFFER, 64+max_lights*80+(spotLights)*96, 16, glm::value_ptr(transform.position));
+            glBufferSubData(GL_UNIFORM_BUFFER, 64+max_lights*80+(spotLights)*96+16, 80, s);
+            spotLights++;
         }
-    }
-
-    glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  
-
-
-    auto modelsView = registry.view<Transform, RenderingData, ModelWrapper>();
-    modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
-        // auto &transform = meshesView.get<Transform>(entity);
-        // auto &modelWrapper = meshesView.get<ModelWrapper>(entity);
-        renderingData.shader->use();
-
-        // renderingData.shader->setVec3("viewPos", camera.Position);
+        Shader lightshader = state->engine_data.shaders["light"];
+        lightshader.use();
 
         glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
         modelMatrix = glm::translate(modelMatrix, transform.position); // Translate
         modelMatrix *= transform.rotation; // Rotate
-        modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale        
+        modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale
+        lightshader.setMat4("model", modelMatrix);
+
+        modelWrapper.model.Draw(lightshader, -1);
+    }
+    glm::vec3 numLights = glm::vec3(dirLight, pointLights, spotLights);
+    glBufferSubData(GL_UNIFORM_BUFFER, 768, 16, glm::value_ptr(numLights));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    auto modelsView = registry.view<Transform, RenderingData, ModelWrapper>();
+    modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
+        renderingData.shader->use();
+
+        glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        modelMatrix = glm::translate(modelMatrix, transform.position); // Translate
+        modelMatrix *= transform.rotation; // Rotate
+        modelMatrix = glm::scale(modelMatrix, transform.scale); // Scale
         renderingData.shader->setMat4("model", modelMatrix);
 
         renderingData.shader->setFloat("shininess", 32);
@@ -107,7 +133,18 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     });
 
     
-    RenderInstanced(viewMatrix, projectionMatrix);
+    // Render Instanced Meteorites
+    // unsigned int amount = 10000;
+    // // draw meteorites
+    // state->engine_data.shaders["instanced"].use();
+
+    // for(unsigned int i = 0; i < state->rock->meshes.size(); i++)
+    // {
+    //     glBindVertexArray(state->rock->meshes[i].VAO);
+    //     glDrawElementsInstanced(
+    //         GL_TRIANGLES, state->rock->meshes[i].indices.size(), GL_UNSIGNED_INT, 0, amount
+    //     );
+    // }
 
     // Render Skybox
 
@@ -124,20 +161,6 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 };
 
 
-
-void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
-    unsigned int amount = 10000;
-    // draw meteorites
-    state->engine_data.shaders["instanced"].use();
-
-    for(unsigned int i = 0; i < state->rock->meshes.size(); i++)
-    {
-        glBindVertexArray(state->rock->meshes[i].VAO);
-        glDrawElementsInstanced(
-            GL_TRIANGLES, state->rock->meshes[i].indices.size(), GL_UNSIGNED_INT, 0, amount
-        );
-    }
-}
 
 struct VectorFloatHasher {
     std::size_t operator()(std::vector<float> const& vec) const {

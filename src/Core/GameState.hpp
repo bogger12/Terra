@@ -44,7 +44,7 @@ struct GameState
 
     unsigned int skyboxTexture;
 
-    unsigned int uboMatrices, uboDirLight;
+    unsigned int uboMatrices, uboLights;
 
     Model *rock;
 };

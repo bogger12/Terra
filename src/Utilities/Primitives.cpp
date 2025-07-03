@@ -102,10 +102,7 @@ void Primitives::SetupSkyboxVAO(unsigned int *skyboxVAO) {
     glEnableVertexAttribArray(0);
 }
 
-void Primitives::SetupUniformBuffer(unsigned int &ubo, unsigned int size, unsigned int shaderID, std::string uniformBlockName, unsigned int uniformBlockBinding) {
-
-    unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderID, uniformBlockName.c_str());
-    glUniformBlockBinding(shaderID, uniformBlockIndex, uniformBlockBinding); // 0 is the binding block of the ubo
+void Primitives::SetupUniformBuffer(unsigned int &ubo, unsigned int size, unsigned int uniformBlockBinding) {
 
     glGenBuffers(1, &ubo);
     
@@ -113,7 +110,14 @@ void Primitives::SetupUniformBuffer(unsigned int &ubo, unsigned int size, unsign
     glBufferData(GL_UNIFORM_BUFFER, size, NULL, GL_STATIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     
-    glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockBinding, ubo, 0, size);  // 0 is the binding block of the ubo
+    glBindBufferRange(GL_UNIFORM_BUFFER, uniformBlockBinding, ubo, 0, size);
+
+}
+
+void Primitives::SetShaderUniformBuffer(unsigned int shaderID, std::string uniformBlockName, unsigned int uniformBlockBinding) {
+
+    unsigned int uniformBlockIndex = glGetUniformBlockIndex(shaderID, uniformBlockName.c_str());
+    glUniformBlockBinding(shaderID, uniformBlockIndex, uniformBlockBinding); 
 
 }
 

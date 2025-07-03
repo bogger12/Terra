@@ -10,7 +10,6 @@ out vec3 Normal;
 out vec3 FragPos;
 out vec2 TexCoords;
 out mat3 TBN;
-out float FresnelEffect;
 out vec3 ViewDir;
 
 layout (std140) uniform Matrices
@@ -39,6 +38,5 @@ void main()
 
 	ViewDir = normalize(viewPos - FragPos);
 
-	FresnelEffect = pow(1.0 - dot(Normal, ViewDir), 3);
 }
 

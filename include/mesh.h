@@ -78,7 +78,6 @@ public:
             shader.setVec3("colorMat.ambient", colorMaterial.Ambient);
             shader.setFloat("shininess", colorMaterial.Shininess);
         } else if (assignTextures) {
-            shader.setVec3("colorMat.diffuse", glm::vec3(0.0));
 
             if (useReflectionMap) {
                 glActiveTexture(GL_TEXTURE0);

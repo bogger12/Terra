@@ -81,6 +81,7 @@ void Game::Init(WindowManager *gameWindowManager)
     // Model barrel = Model(asset("/models/barrel/barrel.obj"));
     // Model room = Model(asset("/models/Isometric_Room_Blend/Isometric Room.obj"));
     Model planet = Model(asset("/models/planet/planet.obj"));
+    Model testlevel = Model(asset("/models/testlevel/testlevel.obj"));
     state->rock = new Model(asset("/models/rock/rock.obj"));
 
 
@@ -106,18 +107,18 @@ void Game::Init(WindowManager *gameWindowManager)
     );
     state->m_registry.emplace<LightTag>(light_entity);
 
-    // const auto light_entity2 = state->m_registry.create();
-    // state->m_registry.emplace<Transform>(light_entity2, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
-    // state->m_registry.emplace<ModelWrapper>(light_entity2, light);
-    // state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders["light"]);
-    // state->m_registry.emplace<SpotLight>(light_entity2, 
-    //     glm::vec4(0.2f, 0.2f, 0.2f), 
-    //     glm::vec4(0.5f, 0.5f, 0.5f), 
-    //     glm::vec4(1.0f, 1.0f, 1.0f),
-    //     glm::vec4(-5.0f, 0.0f, 2.0f),
-    //     12.5f, 17.5f
-    // );
-    // state->m_registry.emplace<LightTag>(light_entity2);
+    const auto light_entity2 = state->m_registry.create();
+    state->m_registry.emplace<Transform>(light_entity2, glm::vec3(5.0f, 0.0f, 2.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
+    state->m_registry.emplace<ModelWrapper>(light_entity2, light);
+    state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders["light"]);
+    state->m_registry.emplace<SpotLight>(light_entity2, 
+        glm::vec4(-5.0f, 0.0f, 2.0f, 1.0f),
+        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
+        glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f))
+    );
+    state->m_registry.emplace<LightTag>(light_entity2);
 
     const auto dirlight = state->m_registry.create();
     state->m_registry.emplace<Transform>(dirlight, glm::vec3(0.0f, 5.0f, 0.0f), glm::mat4(1.0f), glm::vec3(0.1f, 0.1f, 0.1f));
@@ -130,24 +131,12 @@ void Game::Init(WindowManager *gameWindowManager)
         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)
     );
     state->m_registry.emplace<LightTag>(dirlight);
-    
 
 
-    // const auto model_test_entity2 = state->m_registry.create();
-    // state->m_registry.emplace<Transform>(model_test_entity2, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    // state->m_registry.emplace<ModelWrapper>(model_test_entity2, barrel);
-    // state->m_registry.emplace<RenderingData>(model_test_entity2, &state->engine_data.shaders["model"]);
-    
-    // const auto model_test_entity3 = state->m_registry.create();
-    // state->m_registry.emplace<Transform>(model_test_entity3, glm::vec3(0.5f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    // state->m_registry.emplace<ModelWrapper>(model_test_entity3, barrel);
-    // state->m_registry.emplace<RenderingData>(model_test_entity3, &state->engine_data.shaders["model"]);
-    
-
-    // const auto model_test_entity5 = state->m_registry.create();
-    // state->m_registry.emplace<Transform>(model_test_entity5, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    // state->m_registry.emplace<ModelWrapper>(model_test_entity5, room);
-    // state->m_registry.emplace<RenderingData>(model_test_entity5, &state->engine_data.shaders["model"]);
+    const auto test_level_entity = state->m_registry.create();
+    state->m_registry.emplace<Transform>(test_level_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<ModelWrapper>(test_level_entity, testlevel);
+    state->m_registry.emplace<RenderingData>(test_level_entity, &state->engine_data.shaders["model"]);
 
     const auto planet_entity = state->m_registry.create();
     state->m_registry.emplace<Transform>(planet_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
@@ -204,11 +193,10 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetupQuadVAO(&state->quadVAO);
     Primitives::SetupSkyboxVAO(&state->skyboxVAO);
 
-    Primitives::SetupTest();
+    // Primitives::SetupTest();
 
-    std::vector<std::string> faces
-    { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/cubemaps/space/"), GL_RGBA);
+    // std::vector<std::string> faces { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
+    // state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/cubemaps/forest2/"), GL_RGBA);
     
 
     RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
@@ -217,11 +205,17 @@ const int Game::Run(ImGuiContext *hostContext)
     glUniform1i(glGetUniformLocation(state->engine_data.shaders["screenquad"].ID, "depthTexture"), 1); // GL_TEXTURE1
 
     // Uniform Buffer Object Stuff
-    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, state->engine_data.shaders["model"].ID, "Matrices", 0);
-    Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders["model"].ID, "DirLight", 1);
+    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, 0); // Matrices
+    Primitives::SetupUniformBuffer(state->uboLights, 784, 1); // Lights
 
-    Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, state->engine_data.shaders["instanced"].ID, "Matrices", 0);
-    Primitives::SetupUniformBuffer(state->uboDirLight, sizeof(DirectionalLight), state->engine_data.shaders["instanced"].ID, "DirLight", 1);
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Matrices", 0); // Matrices
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Lights", 1); // Lights
+
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["light"].ID, "Matrices", 0); // Matrices
+
+
+    // Primitives::SetShaderUniformBuffer(state->engine_data.shaders["instanced"].ID, "Matrices", 0); // Matrices
+    // Primitives::SetShaderUniformBuffer(state->engine_data.shaders["instanced"].ID, "Lights", 1); // Lights
 
     // RenderSystem::BindVertexArray(state->m_registry, true); // Making sure to set all VBOs and VAOs to new values
     // TextureSystem::LoadTextures(state->engine_data.textures);
@@ -403,6 +397,10 @@ void reload_shaders() {
     std::cout << "Shaders Reloaded" << std::endl;
     for (auto& [shaderName, shader] : state->engine_data.shaders) {
         shader.load();
+
+        Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Matrices", 0); // Matrices
+        Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Lights", 1); // Lights
+
     };
 }
 
