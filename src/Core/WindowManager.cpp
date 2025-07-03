@@ -30,6 +30,9 @@ void WindowManager::Create(int width, int height, std::string windowName)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
+    // Multisampling
+    glfwWindowHint(GLFW_SAMPLES, 4);
+
     // glfw window creation
     // --------------------
     window = glfwCreateWindow(width, height, windowName.c_str(), NULL, NULL);

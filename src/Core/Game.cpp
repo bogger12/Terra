@@ -178,6 +178,8 @@ void Game::Init(WindowManager *gameWindowManager)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
     glEnable(GL_CULL_FACE); 
     // glCullFace(GL_FRONT); 
+    glEnable(GL_MULTISAMPLE); 
+
 
     // Because its a retina display wtf?? Gets reset on size change
     windowManager->width *= 2;
@@ -206,7 +208,7 @@ const int Game::Run(ImGuiContext *hostContext)
 
     std::vector<std::string> faces
     { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/spacebox/"), GL_RGBA);
+    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/cubemaps/space/"), GL_RGBA);
     
 
     RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
