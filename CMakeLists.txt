@@ -35,7 +35,12 @@ add_compile_definitions(ASSET_DIR="../src/assets")
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
 
-add_library(TerraGame SHARED src/glad.c ${GAME_SOURCES})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_library(TerraGame SHARED src/glad.c ${GAME_SOURCES})
+else()
+  add_library(TerraGame STATIC src/glad.c ${GAME_SOURCES})
+endif()
 
 set_target_properties(TerraGame PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(TerraGame PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -95,6 +100,7 @@ target_link_libraries(TerraGame PRIVATE
 
 # Copy libglfw.dylib next to your binary at runtime
 add_custom_command(TARGET Terra POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Terra>/libraries"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${GLFW3_LIBRARY}
         ${ASSIMP_LIBRARY}
