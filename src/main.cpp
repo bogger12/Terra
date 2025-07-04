@@ -1,13 +1,8 @@
-///
-/// main.cpp
-/// EnttPong
-///
-/// Refer to LICENSE.txt for more details.
-///
-
 #include <ctime>
 #include <iostream>
-#include <dlfcn.h>
+#ifdef DEBUG
+    #include <dlfcn.h>
+#endif
 #include <iostream>
 
 #include "imgui.h"
@@ -19,10 +14,11 @@
 #include "Core/GameState.hpp"
 
 
-
+#ifdef DEBUG
 int load_shared_lib();
 const char* libPath = "libTerraGame.dylib";
 bool instanceCreated = false;
+#endif
 
 WindowManager gameWindowManager = WindowManager();
 GameState gameState;
@@ -39,11 +35,26 @@ int main(int argsc, char *argsv[])
     {
         // Game game("OpenGL Game", 800, 600);
         gameWindowManager.Create(w, h, windowName);
+#ifdef DEBUG
         while(true) {
             if (!load_shared_lib()) {
                 return EXIT_SUCCESS;
             }
         }
+#else 
+        WindowManager::InitialiseGlad();
+        Game::Init(&gameWindowManager, &gameState);
+        glfwMakeContextCurrent(gameWindowManager.GetWindow()); // `window` must be a valid GLFWwindow*
+        
+        gameWindowManager.InitialiseGUI();
+        ImGui_ImplGlfw_InstallCallbacks(gameWindowManager.GetWindow());
+
+        if (!Game::Run(ImGui::GetCurrentContext())) {
+            gameWindowManager.ShutdownGUI();
+            return EXIT_SUCCESS;
+        }
+        
+#endif
         // return game.Run();
     }
     catch (const std::exception &e)
@@ -64,7 +75,7 @@ int main(int argsc, char *argsv[])
     }
 }
 
-
+#ifdef DEBUG
 int load_shared_lib() {
     
     void* handle = dlopen(libPath, RTLD_NOW);
@@ -94,3 +105,4 @@ int load_shared_lib() {
     dlclose(handle);
     return runResult;
 }
+#endif

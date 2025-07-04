@@ -10,7 +10,7 @@
 
 class Game {
     public:
-        static void Init(WindowManager *gameWindowManager);
+        static void Init(WindowManager *gameWindowManager, GameState *gameState);
         static const int Run(ImGuiContext *hostContext);
         static int Events(float deltaTime);
         static void Render();

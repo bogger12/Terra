@@ -36,14 +36,14 @@ std::map<std::string, float> time_map;
 
 
 // NEEDED FOR DYNAMIC LINKING SYMBOL LOOKUP
-
+#ifdef DEBUG
 extern "C" void CreateGame(WindowManager *gameWindowManager, GameState *gameState, bool isCreated) {
     state = gameState;
     windowManager = gameWindowManager;
     WindowManager::InitialiseGlad();
     windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
     // glfwMakeContextCurrent(gameWindowManager->GetWindow());
-    if (!isCreated) Game::Init(gameWindowManager);
+    if (!isCreated) Game::Init(gameWindowManager, gameState);
 }
 
 extern "C" int RunGame(ImGuiContext *hostContext) {
@@ -52,11 +52,19 @@ extern "C" int RunGame(ImGuiContext *hostContext) {
 
     return Game::Run(hostContext);
 }
+#endif
 
 // Game Code
 
-void Game::Init(WindowManager *gameWindowManager)
+void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 {
+#ifndef DEBUG
+    state = gameState;
+    windowManager = gameWindowManager;
+    windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
+#endif
+
+    // Clear entities
     state->m_registry.clear();
 
     
@@ -273,10 +281,12 @@ int Game::Events(float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         state->camera.ProcessKeyboard(RIGHT, deltaTime);
 
+#ifdef DEBUG
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         std::cout << "Hot reloading" << std::endl;
         return 1;
     }
+#endif
 
     return 0;
 }

@@ -19,7 +19,7 @@ glm::mat4 EulerAnglesToMat4(const glm::vec3& euler) {
     return glm::mat4_cast(glm::quat(glm::radians(euler)));
 }
 
-void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager))
+void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager, GameState *gameState))
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebad Window
@@ -37,7 +37,11 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         ImGui::Begin("SideBar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove); // Create a window called "Hello, world!" and append into it.
         windowWidth = ImGui::GetWindowSize().x;
 
-        ImGui::Text("Terra Engine v0.0.1");                       // Display some text (you can use a format strings too)
+        const char *buildType = "(Alpha)";
+#ifdef DEBUG
+        buildType = "Hot Reloadable";
+#endif
+        ImGui::Text("Terra Engine v0.0.1 %s", buildType);                       // Display some text (you can use a format strings too)
         ImGui::Dummy(ImVec2(0.0f, 20.0f));
         ImGui::Checkbox("Demo Window", &state->show_demo_window); // Edit bools storing our window open/close state
         ImGui::ColorEdit3("Clear color", (float *)&state->clear_color); // Edit 3 floats representing a color
@@ -52,7 +56,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
-        if (ImGui::Button("Reinit State")) GameInit(&windowManager);
+        if (ImGui::Button("Reinit State")) GameInit(&windowManager, state);
 
         float aspect = (float)windowManager.width / (float)windowManager.height;
         ImGui::Image((ImTextureID)(intptr_t)state->renderTexture, ImVec2(windowWidth * 0.95f, windowWidth * 0.95f / aspect), {0, 1}, {1, 0});

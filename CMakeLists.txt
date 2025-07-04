@@ -5,7 +5,11 @@ project(Terra VERSION 1.0
     LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
+
+
+add_compile_definitions("$<$<CONFIG:Debug>:DEBUG>") # sets DEBUG preprocess if Debug config
+
 
 
 find_package(OpenGL REQUIRED)

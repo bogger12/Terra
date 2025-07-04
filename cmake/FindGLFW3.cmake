@@ -51,7 +51,7 @@ FIND_PATH(
 
 # Search for the library
 FIND_LIBRARY(
-	GLFW3_LIBRARY NAMES glfw.3 glfw
+	GLFW3_LIBRARY NAMES glfw.3 glfw glfw3
 	PATHS ${_glfw3_LIB_SEARCH_DIRS} 
 	NO_DEFAULT_PATH
 )
