@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Core/WindowManager.hpp"
-#include "../Components/All.hpp"
+#include "../Components/Components.hpp"
 #include "../Components/Lights.hpp"
 #include <entt/entt.hpp>
 #include <camera.h>
@@ -9,7 +9,6 @@
 class RenderSystem {
     public:
         RenderSystem() = default;
-        static void Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera);
+        static void Render(entt::registry &registry, float fov, Camera camera, glm::vec2 projectionRatio);
         static void BindVertexArray(entt::registry &registry, bool reloadVBOs=false);
-        static void BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture, unsigned int *depthTexture);
 };

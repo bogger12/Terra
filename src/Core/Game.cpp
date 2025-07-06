@@ -7,12 +7,13 @@
 #endif
 
 #include "Game.hpp"
-#include "../Components/All.hpp"
+#include "../Components/Components.hpp"
 #include "../Events/KeyDown.hpp"
 #include <camera.h>
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
 #include "../Utilities/Primitives.hpp"
+#include "../Utilities/Graphics.hpp"
 #include "../Systems/GUISystem.hpp"
 #include "GameState.hpp"
 #include "OSMethods.hpp"
@@ -74,8 +75,8 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     shaders["light"] = Shader(asset("/shaders/light.vert"), asset("/shaders/light.frag"));
     shaders["model"] = Shader(asset("/shaders/model_litdir.vert"), asset("/shaders/model_litdir.frag"));
     shaders["instanced"] = Shader(asset("/shaders/model_litdirinstanced.vert"), asset("/shaders/model_litdirinstanced.frag"));
-    shaders["model2"] = Shader(asset("/shaders/model_lit2.vert"), asset("/shaders/model_lit2.frag"));
-    shaders["screenquad"] = Shader(asset("/shaders/quad.vert"), asset("/shaders/quad.frag"));
+    shaders["postprocess"] = Shader(asset("/shaders/postprocessquad.vert"), asset("/shaders/postprocessquad.frag"));
+    shaders["editorview"] = Shader(asset("/shaders/editorviewquad.vert"), asset("/shaders/editorviewquad.frag"));
     shaders["skybox"] = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
 
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
@@ -108,7 +109,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     state->m_registry.emplace<ModelWrapper>(light_entity, light);
     state->m_registry.emplace<RenderingData>(light_entity, &state->engine_data.shaders["light"]);
     state->m_registry.emplace<PointLight>(light_entity, 
-        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 
         glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
         1.0f, 0.09f, 0.032f
@@ -121,7 +122,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     state->m_registry.emplace<RenderingData>(light_entity2, &state->engine_data.shaders["light"]);
     state->m_registry.emplace<SpotLight>(light_entity2, 
         glm::vec4(-5.0f, 0.0f, 2.0f, 1.0f),
-        glm::vec4(0.2f, 0.2f, 0.2f, 1.0f), 
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), 
         glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 
         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),
         glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f))
@@ -142,18 +143,18 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
 
     const auto test_level_entity = state->m_registry.create();
-    state->m_registry.emplace<Transform>(test_level_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    state->m_registry.emplace<Transform>(test_level_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
     state->m_registry.emplace<ModelWrapper>(test_level_entity, testlevel);
     state->m_registry.emplace<RenderingData>(test_level_entity, &state->engine_data.shaders["model"]);
 
-    const auto planet_entity = state->m_registry.create();
-    state->m_registry.emplace<Transform>(planet_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-    state->m_registry.emplace<ModelWrapper>(planet_entity, planet);
-    state->m_registry.emplace<RenderingData>(planet_entity, &state->engine_data.shaders["model"]);
+
+    // const auto planet_entity = state->m_registry.create();
+    // state->m_registry.emplace<Transform>(planet_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    // state->m_registry.emplace<ModelWrapper>(planet_entity, planet);
+    // state->m_registry.emplace<RenderingData>(planet_entity, &state->engine_data.shaders["model"]);
 
     // float positionRange[] = {-20.0f, 20.0f}; float scaleRange[] = {2.0f, 5.0f};
     // test_performance_entities(state->m_registry, 100, positionRange, scaleRange, &room, &state->engine_data.shaders["model"]);
-
 
 
     // Set Game Camera
@@ -203,14 +204,12 @@ const int Game::Run(ImGuiContext *hostContext)
 
     // Primitives::SetupTest();
 
-    // std::vector<std::string> faces { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
-    // state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/cubemaps/forest2/"), GL_RGBA);
+    std::vector<std::string> faces { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png" };
+    state->skyboxTexture = TextureSystem::LoadCubemap(faces, asset("/textures/cubemaps/forest2/"), GL_RGBA);
     
 
-    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
-    glUseProgram(state->engine_data.shaders["screenquad"].ID);
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders["screenquad"].ID, "renderTexture"), 0); // GL_TEXTURE0
-    glUniform1i(glGetUniformLocation(state->engine_data.shaders["screenquad"].ID, "depthTexture"), 1); // GL_TEXTURE1
+    Graphics::SetupFramebuffer(&state->postProcessBuffer, glm::ivec2(windowManager->width, windowManager->height), &state->engine_data.shaders["postprocess"]);
+    Graphics::SetupFramebuffer(&state->editorViewBuffer, glm::ivec2(windowManager->width, windowManager->height), &state->engine_data.shaders["editorview"]);
 
     // Uniform Buffer Object Stuff
     Primitives::SetupUniformBuffer(state->uboMatrices, 2 * sizeof(glm::mat4)+16, 0); // Matrices
@@ -220,6 +219,8 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Lights", 1); // Lights
 
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["light"].ID, "Matrices", 0); // Matrices
+
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["skybox"].ID, "Lights", 1); // Lights
 
 
     // Primitives::SetShaderUniformBuffer(state->engine_data.shaders["instanced"].ID, "Matrices", 0); // Matrices
@@ -295,6 +296,8 @@ void Game::Render()
 {
     // glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
     // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -302,36 +305,36 @@ void Game::Render()
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, state->fbo);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glViewport(0, 0, state->editorViewBuffer.size.x, state->editorViewBuffer.size.y); // Set Viewport to size of editor window
+
+    // Render to post process buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, state->postProcessBuffer.fbo);
+    glClearColor(state->clear_color.x, state->clear_color.y, state->clear_color.z, state->clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
     glEnable(GL_DEPTH_TEST);
-    // glDepthMask(GL_TRUE);
+    int focused = glfwGetWindowAttrib(windowManager->GetWindow(), GLFW_FOCUSED);
+    if (focused) RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size);
+    glDisable(GL_DEPTH_TEST);
 
-    RenderSystem::Render(*windowManager, state->m_registry, state->fov, state->camera);
+    // Render to editor view buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, state->editorViewBuffer.fbo); // editor view buffer
+    glClearColor(state->clear_color.x, state->clear_color.y, state->clear_color.z, state->clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT); // we're not using the stencil buffer now
+    Graphics::DrawFrame(&state->postProcessBuffer, state->quadVAO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
-    // glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(state->clear_color.x, state->clear_color.y, state->clear_color.z, state->clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, windowManager->width, windowManager->height);
 
-    state->engine_data.shaders["screenquad"].use();
-    glBindVertexArray(state->quadVAO);
-    glDisable(GL_DEPTH_TEST);
-    // glDepthMask(GL_FALSE);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, state->renderTexture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, state->depthTexture);
+    // Graphics::DrawFrame(&state->postProcessBuffer, state->quadVAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);  
     auto stop = std::chrono::high_resolution_clock::now();
 
     time_map["8 Entities Render"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
 
     start = std::chrono::high_resolution_clock::now();
-
-    if (state->show_demo_window) ImGui::ShowDemoWindow(); // Show demo window! :)
 
     GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, *windowManager, &reload_shaders, &Init);
     stop = std::chrono::high_resolution_clock::now();
@@ -368,7 +371,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     windowManager->SetSize(width, height);
-    RenderSystem::BindFrameBuffer(*windowManager, &state->fbo, &state->renderTexture, &state->depthTexture);
+    // Graphics::ChangeFramebufferSize(&state->postProcessBuffer, glm::ivec2(width, height));
+    // Graphics::ChangeFramebufferSize(&state->editorViewBuffer, glm::ivec2(width, height));
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -410,6 +414,10 @@ void reload_shaders() {
 
         Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Matrices", 0); // Matrices
         Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Lights", 1); // Lights
+
+        Primitives::SetShaderUniformBuffer(state->engine_data.shaders["light"].ID, "Matrices", 0); // Matrices
+
+        Primitives::SetShaderUniformBuffer(state->engine_data.shaders["skybox"].ID, "Lights", 1); // Lights
 
     };
 }

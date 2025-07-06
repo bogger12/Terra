@@ -13,32 +13,32 @@
 
 struct LightTag {};
 // Base Alignment _ Alignment
-struct DirectionalLight {
-    glm::vec4 direction; // 16 0
+struct alignas(16) DirectionalLight {
+    glm::vec4 direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f); // 16 0
     glm::vec4 ambient = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); // 16 16
     glm::vec4 diffuse = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); // 16 32
     glm::vec4 specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // 16 48
 }; // Total 64
 
-struct PointLight {
+struct alignas(16) PointLight {
     glm::vec4 ambient = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); // 16 0
     glm::vec4 diffuse = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); // 16 16
     glm::vec4 specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // 16 32
     // Values for point light attenuation
-    float constant; // 4 48
-    float linear; // 4 52
-    float quadratic; // 4 56
-    float _pad;
+    float constant = 1.0; // 4 48
+    float linear = 0.09f; // 4 52
+    float quadratic = 0.032f; // 4 56
+    // float _pad;
 }; // Total 60 (64)
 
-struct SpotLight {
-    glm::vec4 direction; // 16 0
-    glm::vec4 ambient = glm::vec4(0.2f, 0.2f, 0.2f, 1.0f); // 16 16
+struct alignas(16) SpotLight {
+    glm::vec4 direction = glm::vec4(0.0f, -1.0f, 0.0f, 1.0f); // 16 0
+    glm::vec4 ambient = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f); // 16 16
     glm::vec4 diffuse = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); // 16 32
     glm::vec4 specular = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // 16 48
     // Values for Spotlight
-    float cutOff; // 4 64
-    float outerCutOff; // 4 68
-    float _pad1;
-    float _pad2;
+    float cutOff = glm::cos(glm::radians(12.5f)); // 4 64
+    float outerCutOff = glm::cos(glm::radians(17.5f)); // 4 68
+    // float _pad1;
+    // float _pad2;
 }; // Total 72 (80)

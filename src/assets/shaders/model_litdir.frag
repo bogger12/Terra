@@ -98,7 +98,7 @@ vec3 getDiffuse() {
     else return colorMat.diffuse;
 }
 vec3 getSpecular() {
-    if (!useColor) return vec3(texture(texture_specular1, TexCoords));
+    if (!useColor) return vec3(texture(texture_specular1, TexCoords).r);
     else return colorMat.specular;
 }
 
@@ -112,6 +112,8 @@ float LinearizeDepth(float depth)
 
 void main()
 {   
+    float alpha = texture(texture_diffuse1, TexCoords).a;
+    if (alpha <= 0.1) discard; 
     // Properties
     vec3 normal;
     //     FragColor = vec4(dirdirection, 1.0);
@@ -140,7 +142,7 @@ void main()
     // define an output color value
     vec3 result = vec3(0.0);
 
-    // FragColor = vec4(vec3(spotLights[0].direction), 1.0);
+    // FragColor = vec4(normal, 1.0);
     // return;
     
     // Reflection test
@@ -182,7 +184,7 @@ vec3 CalcDirectionalLight(DirLight dirLight, vec3 normal, vec3 viewDir)
     // combine results
     vec3 ambient  = dirLight.ambient  * getAmbient();
     vec3 diffuse  = dirLight.diffuse  * diff * getDiffuse();
-    vec3 specular = dirLight.specular * spec;
+    vec3 specular = dirLight.specular * spec * getSpecular();;
     return (ambient + diffuse + specular);
 }  
 
@@ -211,19 +213,20 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
     vec3 lightDir = normalize(light.position - fragPos);
-    if (dot(normal, lightDir) <= 0) return vec3(0.0);
+    // if (dot(normal, lightDir) <= 0) return vec3(0.0);
 
     float theta = dot(lightDir, normalize(-light.direction));
     float epsilon = light.cutOff - light.outerCutOff;
     float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
 
     // diffuse shading
+    float amb = dot(normal, lightDir) > 0 ? 1 : 0;
     float diff = max(dot(normal, lightDir), 0.0);
     // specular shading
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     // combine results
-    vec3 ambient  = light.ambient  * getAmbient();
+    vec3 ambient  = light.ambient  * amb  * getAmbient();
     vec3 diffuse  = light.diffuse  * diff * getDiffuse();
     vec3 specular = light.specular * spec * getSpecular();
     ambient  *= intensity;

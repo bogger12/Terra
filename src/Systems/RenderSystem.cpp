@@ -7,60 +7,13 @@
 #include "RenderSystem.hpp"
 void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
-void RenderSystem::BindFrameBuffer(WindowManager &windowManager, unsigned int *fbo, unsigned int *renderTexture, unsigned int *depthTexture) {
-    // unsigned int fbo;
-    glGenFramebuffers(1, fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, *fbo);
 
-    glGenTextures(1, renderTexture);
-    glBindTexture(GL_TEXTURE_2D, *renderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, windowManager.width, windowManager.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
-
-    glGenTextures(1, depthTexture);
-    glBindTexture(GL_TEXTURE_2D, *depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, windowManager.width, windowManager.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);  
-
-    // Attach texture to framebuffer
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *renderTexture, 0);  
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *depthTexture, 0);  
-    
-    GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, drawBuffers);
-
-
-    // unsigned int rbo;
-    // glGenRenderbuffers(1, &rbo);
-    // glBindRenderbuffer(GL_RENDERBUFFER, rbo); 
-    // glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowManager.width, windowManager.height);  
-    // glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    // // Attach the renderbuffer object to the depth and stencil attachment of the framebuffer
-    // glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); 
-
-    // glDeleteFramebuffers(1, &fbo); 
-    // glDeleteRenderbuffers(1, &rbo);
-
-
-    // We get the texture and fbo out of this - rbo is discarded once allocated
-    
-}
-
-
-void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry, float fov, Camera camera)
+void RenderSystem::Render(entt::registry &registry, float fov, Camera camera, glm::vec2 projectionRatio)
 {   
     
     auto lightsView = registry.view<Transform, ModelWrapper, LightTag>();
     
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), (float)windowManager.width / (float)windowManager.height, 0.1f, 100.0f);
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), projectionRatio.x / projectionRatio.y, 0.1f, 100.0f);
     glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
     glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  // Remove translation
 
@@ -115,7 +68,8 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
     glm::vec3 numLights = glm::vec3(dirLight, pointLights, spotLights);
     glBufferSubData(GL_UNIFORM_BUFFER, 768, 16, glm::value_ptr(numLights));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
+        
+    glDisable(GL_CULL_FACE);
     auto modelsView = registry.view<Transform, RenderingData, ModelWrapper>();
     modelsView.each([&](auto& transform, auto& renderingData, auto& modelWrapper) {
         renderingData.shader->use();
@@ -131,6 +85,8 @@ void RenderSystem::Render(WindowManager &windowManager, entt::registry &registry
 
         modelWrapper.model.Draw(*renderingData.shader, -1);
     });
+    glEnable(GL_CULL_FACE); 
+
 
     
     // Render Instanced Meteorites

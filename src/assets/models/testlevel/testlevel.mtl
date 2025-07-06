@@ -1,7 +1,7 @@
-# Blender MTL File: 'None'
-# Material Count: 1
+# Blender MTL File: 'testlevel.blend'
+# Material Count: 4
 
-newmtl Tile
+newmtl Bark
 Ns 250.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.800000 0.800000 0.800000
@@ -10,6 +10,44 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 2
-map_Bump Tiles074_1K-JPG/Tiles074_1K-JPG_NormalGL.jpg
-map_Kd Tiles074_1K-JPG/Tiles074_1K-JPG_Color.jpg
-map_Ns Tiles074_1K-JPG/Tiles074_1K-JPG_Roughness.jpg
+map_Bump Bark001_1K-JPG/Bark001_1K-JPG_NormalGL.jpg
+map_Kd Bark001_1K-JPG/Bark001_1K-JPG_Color.jpg
+map_Ns Bark001_1K-JPG/Bark001_1K-JPG_Roughness.jpg
+
+newmtl Ground
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump Ground068_1K-JPG/Ground068_1K-JPG_NormalGL.jpg
+map_Kd Ground068_1K-JPG/Ground068_1K-JPG_Color.jpg
+map_Ks Ground068_1K-JPG/Ground068_1K-JPG_Roughness.jpg
+
+newmtl Rock
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump Rock062_1K-JPG/Rock062_1K-JPG_NormalGL.jpg
+map_Kd Rock062_1K-JPG/Rock062_1K-JPG_Color.jpg
+map_Ns Rock062_1K-JPG/Rock062_1K-JPG_Roughness.jpg
+
+newmtl Tree_Branch
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Tree Branch.png
+map_d textures/Tree Branch.png

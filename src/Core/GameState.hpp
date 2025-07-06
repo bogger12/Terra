@@ -4,10 +4,12 @@
 #include <shader.h>
 #include <vector>
 #include "../Components/Structures.hpp"
+#include "../Utilities/Graphics.hpp"
 #include "WindowManager.hpp"
 #include <entt/entt.hpp>
 #include <camera.h>
 #include "model.h"
+
 
 struct EngineData 
 {
@@ -40,11 +42,14 @@ struct GameState
 
     // Rendering
 
-    unsigned int fbo, renderTexture, depthTexture, quadVAO, skyboxVAO;
+    unsigned int quadVAO, skyboxVAO;
 
     unsigned int skyboxTexture;
 
-    unsigned int uboMatrices, uboLights;
+    unsigned int uboMatrices, uboLights; // Uniform Buffer Objects
+
+    RenderFramebuffer postProcessBuffer = RenderFramebuffer();
+    Framebuffer editorViewBuffer = Framebuffer();
 
     Model *rock;
 };
