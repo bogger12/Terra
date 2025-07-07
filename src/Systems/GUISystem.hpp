@@ -19,6 +19,7 @@
 class GUISystem {
     public:
         GUISystem() = default;
+        static void Initialise();
         static void DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager, GameState *gameState));
 
 };

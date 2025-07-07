@@ -4,6 +4,8 @@
 #include "../Systems/TextureSystem.hpp"
 #include "../Utilities/Graphics.hpp"
 #include "../Utilities/Debug.hpp"
+#include "../Core/OSMethods.hpp"
+
 
 
 using namespace entt::literals;
@@ -150,6 +152,12 @@ void DrawAddWindow() {
 }
 
 
+void GUISystem::Initialise() {
+    ImGuiIO &io = ImGui::GetIO();
+    static std::string iniPath = getExecutableDir().string() + "/imgui.ini";
+    io.IniFilename = iniPath.c_str();
+    std::cout << "imgui file: " << io.IniFilename << std::endl;
+}
 
 
 void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager, GameState *gameState))
@@ -161,8 +169,6 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         static float windowWidth = 300.0f;
         static bool showAddWindow = false;
         static entt::entity selected_entity = entt::null;
-
-        static bool layout_initialized = ImGui::DockBuilderGetNode(ImGui::GetID("MainDockSpace"));
 
 
         auto allEntities = registry.view<entt::entity>();
@@ -198,9 +204,13 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         ImGui::PopStyleVar(2);  // Pop ImGuiCol_DockingEmptyBg
 
 
+        // Check if layout has already been initialised
+        ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockspace_id);
+        static bool layout_initialized = (node && node->ChildNodes[0] != nullptr);
+
+
         if (!layout_initialized) {
             layout_initialized = true;
-
 
             ImGuiID dock_main_id = dockspace_id;
             ImGuiID left_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.2f, &left_id, &dock_main_id);

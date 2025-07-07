@@ -196,6 +196,7 @@ const int Game::Run(ImGuiContext *hostContext)
     GLFWwindow *window = windowManager->GetWindow();
 
     ImGui::SetCurrentContext(hostContext);
+    GUISystem::Initialise();
 
     // Setting Up Rendering Data
 
