@@ -23,10 +23,12 @@ void Graphics::SetupFramebuffer(RenderFramebuffer* fb, glm::ivec2 size, Shader *
 
 void Graphics::BindFrameBuffer(Framebuffer *fb){
 
-    glGenFramebuffers(1, &fb->fbo);
+    if (fb->fbo == 0) glGenFramebuffers(1, &fb->fbo);
+    if (fb->renderTexture == 0) glGenTextures(1, &fb->renderTexture);
+
+
     glBindFramebuffer(GL_FRAMEBUFFER, fb->fbo);
 
-    glGenTextures(1, &fb->renderTexture);
     glBindTexture(GL_TEXTURE_2D, fb->renderTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb->size.x, fb->size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -41,16 +43,17 @@ void Graphics::BindFrameBuffer(Framebuffer *fb){
 }
 void Graphics::BindFrameBuffer(RenderFramebuffer* fb) {
 
-    glGenFramebuffers(1, &fb->fbo);
+    if (fb->fbo == 0) glGenFramebuffers(1, &fb->fbo);
+    if (fb->renderTexture == 0) glGenTextures(1, &fb->renderTexture);
+    if (fb->depthTexture == 0) glGenTextures(1, &fb->depthTexture);
+
     glBindFramebuffer(GL_FRAMEBUFFER, fb->fbo);
 
-    glGenTextures(1, &fb->renderTexture);
     glBindTexture(GL_TEXTURE_2D, fb->renderTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fb->size.x, fb->size.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  
 
-    glGenTextures(1, &fb->depthTexture);
     glBindTexture(GL_TEXTURE_2D, fb->depthTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, fb->size.x, fb->size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
