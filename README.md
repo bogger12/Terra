@@ -18,7 +18,7 @@ cd Terra
 To build with **CMake**
 ```bash
 cmake -S . -B build
-cmake --build build
+cmake --build build --config Release
 ```
 
 To run the Engine
@@ -30,7 +30,7 @@ cd build/bin
 
 - **WASD** : *Move Camera*
 - **Mouse** : *Rotate Camera*
-- **TAB** : *Enter/Exit Camera Mode*
+- **ESC** : *Enter/Exit Camera Mode*
 
 
 ## Libraries Used:
