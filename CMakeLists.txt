@@ -39,6 +39,11 @@ endif()
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
 
+if(APPLE)
+    # Filter out imgui_impl_win32.cpp and similar files on macOS
+    list(FILTER GAME_SOURCES EXCLUDE REGEX "imgui_impl_win32.*")
+endif()
+
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_library(TerraGame SHARED src/glad.c ${GAME_SOURCES})
@@ -102,7 +107,7 @@ target_link_libraries(TerraGame PRIVATE
     "-framework QuartzCore"
 )
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
     target_link_libraries(TerraGame PRIVATE ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib)
 endif()
 
