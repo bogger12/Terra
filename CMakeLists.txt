@@ -74,7 +74,7 @@ target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_IN
 target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
 # target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
 target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY} ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib)
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
 
 
 # Link these libraries to the target
@@ -92,12 +92,15 @@ target_link_libraries(TerraGame PRIVATE
     ${GLFW3_LIBRARY}
     OpenGL::GL
     ${ASSIMP_LIBRARY}
-     ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib
     "-framework Cocoa"
     "-framework IOKit"
     "-framework CoreVideo"
     "-framework QuartzCore"
 )
+
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(TerraGame PRIVATE ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib)
+endif()
 
 # Copy libglfw.dylib next to your binary at runtime
 add_custom_command(TARGET Terra POST_BUILD
