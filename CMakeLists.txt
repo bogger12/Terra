@@ -39,7 +39,7 @@ endif()
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
 
-if(APPLE)
+if(NOT WIN32)
     # Filter out imgui_impl_win32.cpp and similar files on macOS
     list(FILTER GAME_SOURCES EXCLUDE REGEX "imgui_impl_win32.*")
 endif()
@@ -80,10 +80,11 @@ file(COPY "${CMAKE_SOURCE_DIR}/src/assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_D
 
 # Set include directories for libraries
 target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
-target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
+target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/lib)
 # target_include_directories(Terra PUBLIC ${PROJECT_SOURCE_DIR}/src ${GLFW3_LIBRARY})
 target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIR} ${ASSIMP_INCLUDE_DIR})
-target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
+target_include_directories(TerraGame PUBLIC ${PROJECT_SOURCE_DIR}/lib)
+
 
 
 # Link these libraries to the target
@@ -91,21 +92,29 @@ target_link_libraries(Terra PRIVATE
     ${GLFW3_LIBRARY}
     OpenGL::GL
     TerraGame
-    "-framework Cocoa"
-    "-framework IOKit"
-    "-framework CoreVideo"
-    "-framework QuartzCore"
 )
+
 # Link these libraries to the target
 target_link_libraries(TerraGame PRIVATE
     ${GLFW3_LIBRARY}
     OpenGL::GL
     ${ASSIMP_LIBRARY}
-    "-framework Cocoa"
-    "-framework IOKit"
-    "-framework CoreVideo"
-    "-framework QuartzCore"
 )
+
+if(APPLE)
+    target_link_libraries(Terra PRIVATE
+    	"-framework Cocoa"
+    	"-framework IOKit"
+    	"-framework CoreVideo"
+    	"-framework QuartzCore"
+    )
+    target_link_libraries(TerraGame PRIVATE
+	"-framework Cocoa"
+	"-framework IOKit"
+	"-framework CoreVideo"
+	"-framework QuartzCore"
+    )
+endif()
 
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND WIN32)
     target_link_libraries(TerraGame PRIVATE ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib)
