@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <platformGL.h>
+
 #include "WindowManager.hpp"
 #include <entt/entt.hpp>
 #include "../Systems/RenderSystem.hpp"

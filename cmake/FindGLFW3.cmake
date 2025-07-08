@@ -15,18 +15,18 @@
 # Cmake file from: https://github.com/daw42/glslcookbook
 
 set( _glfw3_HEADER_SEARCH_DIRS
-	# "/usr/include"
-	# "/usr/local/include"
-	# "${CMAKE_SOURCE_DIR}/include"
+	"/usr/include"
+	"/usr/local/include"
+	"${CMAKE_SOURCE_DIR}/include"
 	"${PROJECT_SOURCE_DIR}/include"
-	# "C:/Program Files (x86)/glfw/include" 
+	"C:/Program Files (x86)/glfw/include" 
 )
 set( _glfw3_LIB_SEARCH_DIRS
-	# "/usr/lib"
-	# "/usr/local/lib"
-	# "${CMAKE_SOURCE_DIR}/lib"
+	"/usr/lib"
+	"/usr/local/lib"
+	"${CMAKE_SOURCE_DIR}/lib"
 	"${PROJECT_SOURCE_DIR}/lib"
-	# "C:/Program Files (x86)/glfw/lib-msvc110" 
+	"C:/Program Files (x86)/glfw/lib-msvc110" 
 )
 message(${PROJECT_SOURCE_DIR})
 

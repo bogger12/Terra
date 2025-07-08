@@ -1,8 +1,7 @@
 #pragma once
 
 #include "../Core/WindowManager.hpp"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <platformGL.h>
 #include <iostream>
 #include <glm/glm.hpp>
 #include <shader.h>
