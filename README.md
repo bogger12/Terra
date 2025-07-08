@@ -10,6 +10,15 @@
 ## Installation:
 The Engine build files are prepared with **CMake** and your chosen build tool (`make`, `ninja` etc) is used as for compilation.
 
+### Linux
+Install `glfw` and `assimp` libraries with your package manager of choice.
+For example:
+```bash
+pacman -S glfw assimp
+apt-get install glfw assimp
+```
+Then follow the commands below
+
 ### Mac/Windows
 > Ensure you have **CMake** installed
 
@@ -30,7 +39,6 @@ cd build/bin
 ./Terra
 ```
 
-### Linux
 
 *Instructions in progress, check back soon*
 
