@@ -30,16 +30,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/libraries)
 
 # Change assets dir to be defined as local one
-add_compile_definitions(ASSET_DIR="../src/assets")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions(ASSET_DIR="../src/assets")
+else()
+    add_compile_definitions(ASSET_DIR="assets")
+endif()
 
 # Assign all sources to GAME_SOURCES list
 file(GLOB_RECURSE GAME_SOURCES "src/*.cpp")
 
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_library(TerraGame SHARED src/glad.c ${GAME_SOURCES})
+    add_library(TerraGame SHARED src/glad.c ${GAME_SOURCES})
 else()
-  add_library(TerraGame STATIC src/glad.c ${GAME_SOURCES})
+    add_library(TerraGame STATIC src/glad.c ${GAME_SOURCES})
 endif()
 
 set_target_properties(TerraGame PROPERTIES VERSION ${PROJECT_VERSION})
@@ -102,11 +106,13 @@ if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(TerraGame PRIVATE ${PROJECT_SOURCE_DIR}/lib/zlibstatic.lib)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 # Copy libglfw.dylib next to your binary at runtime
-add_custom_command(TARGET Terra POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Terra>/libraries"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${GLFW3_LIBRARY}
-        ${ASSIMP_LIBRARY}
-        $<TARGET_FILE_DIR:Terra>/libraries/
-)
+    add_custom_command(TARGET Terra POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Terra>/libraries"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${GLFW3_LIBRARY}
+            ${ASSIMP_LIBRARY}
+            $<TARGET_FILE_DIR:Terra>/libraries/
+    )
+endif()

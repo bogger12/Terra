@@ -8,7 +8,10 @@
 
 
 ## Installation:
-The Engine build files are prepared with **CMake** and your chosen build tool (`make`, `ninja` etc) is used as for compilation. (This is currently mac-specific)
+The Engine build files are prepared with **CMake** and your chosen build tool (`make`, `ninja` etc) is used as for compilation.
+
+### Mac/Windows
+> Ensure you have **CMake** installed
 
 To Clone
 ```bash
@@ -26,6 +29,11 @@ To run the Engine
 cd build/bin
 ./Terra
 ```
+
+### Linux
+
+*Instructions in progress, check back soon*
+
 ## Controls:
 
 - **WASD** : *Move Camera*
