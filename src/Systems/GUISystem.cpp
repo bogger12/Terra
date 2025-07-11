@@ -2,6 +2,7 @@
 #include "../Components/Components.hpp"
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
+#include "../Systems/EditorSystem.hpp"
 #include "../Utilities/Graphics.hpp"
 #include "../Utilities/Debug.hpp"
 #include "../Core/OSMethods.hpp"
@@ -160,7 +161,7 @@ void GUISystem::Initialise() {
 }
 
 
-void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, WindowManager &windowManager, void (*reload_shaders)(), void (*GameInit)(WindowManager *windowManager, GameState *gameState))
+void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineData *engine_data, void (*reload_shaders)(), void (*GameInit)(WindowManager *window, GameState *gameState))
 {
     ImGuiIO &io = ImGui::GetIO();
     // Sidebar Window
@@ -239,11 +240,20 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::Begin("Viewport", nullptr);
         ImVec2 editorViewSize = ImGui::GetContentRegionAvail();
-        glm::ivec2 size = glm::vec2(editorViewSize)*2.0f; // Mult by 2 due to retina screen
+
+        ImVec2 contentMin = ImGui::GetWindowContentRegionMin();
+        ImVec2 contentMax = ImGui::GetWindowContentRegionMax();
+        ImVec2 windowPos = ImGui::GetWindowPos();
+        ImVec2 absMin = ImVec2(windowPos.x + contentMin.x, windowPos.y + contentMin.y);
+        ImVec2 absMax = ImVec2(windowPos.x + contentMax.x, windowPos.y + contentMax.y);
+
+        glm::ivec2 size = glm::vec2(editorViewSize)*windowManager->contentScale; // Mult by 2 due to retina screen
         // Change size of buffers
         if (state->editorViewBuffer.size != size) {
             Graphics::ChangeFramebufferSize(&state->postProcessBuffer, size);
             Graphics::ChangeFramebufferSize(&state->editorViewBuffer, size);
+            state->editorViewRect = glm::vec4(absMin.x, absMin.y, absMax.x, absMax.y);
+            // state->editorViewRect = glm::vec4(0,0, size.x, size.y);
         }
 
         ImGui::Image((ImTextureID)(intptr_t)state->editorViewBuffer.renderTexture, ImVec2(editorViewSize), {0, 1}, {1, 0});
@@ -275,11 +285,11 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         // ImGui::Text("counter = %d", counter);
         static bool vsyncOn = true;
         std::string vSyncText = std::string("VSync: ") + (vsyncOn ? "On" : "Off");
-        if (ImGui::Button(vSyncText.c_str())) { vsyncOn = !vsyncOn; windowManager.ChangeVSync(vsyncOn); };
+        if (ImGui::Button(vSyncText.c_str())) { vsyncOn = !vsyncOn; WindowManager::ChangeVSync(vsyncOn); };
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
-        if (ImGui::Button("Reinit State")) GameInit(&windowManager, state);
+        if (ImGui::Button("Reinit State")) GameInit(windowManager, state);
 
         if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) ImGui::Text(" DockingEnable");
         
@@ -319,6 +329,8 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
             std::string entityLabel = entityType + " " + std::to_string(id);
             if (ImGui::Selectable(entityLabel.c_str(), selected_entity == entity)) {
                 selected_entity = entity;
+                EditorSystem::globalGizmo.transform = &registry.get<Transform>(selected_entity);
+                
                 Debug::Log("selected " + entityLabel);
             };
 

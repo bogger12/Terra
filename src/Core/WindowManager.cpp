@@ -4,20 +4,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-WindowManager::WindowManager()
-    : window{nullptr}
+GLFWwindow* WindowManager::Create(int width, int height, std::string windowName)
 {
-}
-
-WindowManager::~WindowManager()
-{
-    glfwTerminate();
-}
-
-void WindowManager::Create(int width, int height, std::string windowName)
-{
-    this->width = width;
-    this->height = height;
+    WindowManager::width = width;
+    WindowManager::height = height;
 
     // glfw: initialize and configure
     // ------------------------------
@@ -43,6 +33,8 @@ void WindowManager::Create(int width, int height, std::string windowName)
         // return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwGetMonitorContentScale(glfwGetPrimaryMonitor(), &contentScale.x, &contentScale.y);
+    return window;
 }
 
 void WindowManager::InitialiseGlad() {
@@ -101,6 +93,7 @@ void WindowManager::OnKeyDown()
 }
 
 void WindowManager::Close() noexcept {
+    glfwTerminate();
 }
 
 void WindowManager::ChangeMouseMode(int value = GLFW_CURSOR_DISABLED)

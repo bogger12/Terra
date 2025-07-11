@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Core/WindowManager.hpp"
 #include <platformGL.h>
 #include <iostream>
 #include <glm/glm.hpp>

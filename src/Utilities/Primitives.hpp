@@ -8,6 +8,7 @@ class Primitives {
     public:
         Primitives() = default;
         static void SetupQuadVAO(unsigned int *quadVAO);
+        static void SetupRayVAO(unsigned int *rayVAO);
         static void SetupSkyboxVAO(unsigned int *skyboxVAO);
         static void SetupUniformBuffer(unsigned int &ubo, unsigned int size, unsigned int uniformBlockBinding);
         static void SetShaderUniformBuffer(unsigned int shaderID, std::string uniformBlockName, unsigned int uniformBlockBinding);

@@ -19,7 +19,19 @@ float quadVertices[] = {
         1.0f, 1.0f,  0.0f,  1.0f, 1.0f
 };
 
- float skyboxVertices[] = {
+float rayVertices[] = { // Quad on the x-z plane from 0,0,0 to 0,0,-1
+    // positions 
+        -0.1f, 0.0f,  0.0f,
+        0.1f, 0.0f,  -1.0f,
+        -0.1f, 0.0f,  -1.0f,
+
+        -0.1f, 0.0f,  0.0f,
+        0.1f, 0.0f,  0.0f,
+        0.1f, 0.0f,  -1.0f,
+};
+
+
+float skyboxVertices[] = {
     // positions          
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
@@ -83,6 +95,22 @@ void Primitives::SetupQuadVAO(unsigned int *quadVAO) {
     // texture attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+}
+
+void Primitives::SetupRayVAO(unsigned int *rayVAO) {
+    unsigned int vbo;
+
+    glGenVertexArrays(1, rayVAO);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(*rayVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rayVertices), rayVertices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
 }
 
 void Primitives::SetupSkyboxVAO(unsigned int *skyboxVAO) {

@@ -2,16 +2,20 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "../Core/GameState.hpp"
+
 
 
 class Debug {
     public:
-        static std::ostringstream logStream;
         static void Log(std::string logString) {
-            logStream << logString << "\n";
+            state->logStream << logString << std::endl;
         }
 
         static std::string ReadLog() {
-            return logStream.str();
+            return state->logStream.str();
+        }
+        static std::ostringstream& LogStream() {
+            return state->logStream;
         }
 };

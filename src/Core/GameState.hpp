@@ -5,7 +5,6 @@
 #include <vector>
 #include "../Components/Structures.hpp"
 #include "../Utilities/Graphics.hpp"
-#include "WindowManager.hpp"
 #include <entt/entt.hpp>
 #include <camera.h>
 #include "model.h"
@@ -42,7 +41,7 @@ struct GameState
 
     // Rendering
 
-    unsigned int quadVAO, skyboxVAO;
+    unsigned int quadVAO, rayVAO, skyboxVAO;
 
     unsigned int skyboxTexture;
 
@@ -50,8 +49,17 @@ struct GameState
 
     RenderFramebuffer postProcessBuffer = RenderFramebuffer();
     Framebuffer editorViewBuffer = Framebuffer();
+    glm::vec4 editorViewRect;
 
     Model *rock;
+
+    bool clickedOnEditorWindow = false;
+
+    
+    std::ostringstream logStream;
+
+    // Temporary
+
 };
 // Pointer to state used by game lib
 extern GameState *state; 

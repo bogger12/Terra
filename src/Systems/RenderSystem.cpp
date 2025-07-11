@@ -1,20 +1,29 @@
 
+#include "RenderSystem.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../Core/GameState.hpp"
 
-#include "RenderSystem.hpp"
-void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/gtx/string_cast.hpp"
+
+
+glm::mat4 RenderSystem::viewMatrix;
+glm::mat4 RenderSystem::projectionMatrix;
+
+void RenderInstanced(glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
 void RenderSystem::Render(entt::registry &registry, float fov, Camera camera, glm::vec2 projectionRatio)
 {   
     
     auto lightsView = registry.view<Transform, ModelWrapper, LightTag>();
     
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(fov), projectionRatio.x / projectionRatio.y, 0.1f, 100.0f);
-    glm::mat4 viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
+    projectionMatrix = glm::perspective(glm::radians(fov), projectionRatio.x / projectionRatio.y, 0.1f, 100.0f);
+    viewMatrix = glm::lookAt(camera.Position, camera.Position + camera.Front, camera.Up);
     glm::mat4 skyBoxView = glm::mat4(glm::mat3(camera.GetViewMatrix()));  // Remove translation
 
 
@@ -116,6 +125,66 @@ void RenderSystem::Render(entt::registry &registry, float fov, Camera camera, gl
 
 };
 
+void RenderSystem::RenderGizmos(Gizmo& gizmo) {
+    
+}
+
+glm::vec3 RenderSystem::PointerToRay(float& x, float& y) {
+
+    assert(state->editorViewBuffer.size.x/windowManager->contentScale.x == state->editorViewRect.z - state->editorViewRect.x); // Check width is correct
+    assert(state->editorViewBuffer.size.y/windowManager->contentScale.y == state->editorViewRect.w - state->editorViewRect.y); // Check height is correct
+
+    // Convert to Normalized Device Coordinates:
+    int nx, ny;
+
+    nx = x - state->editorViewRect.x; // to framebuffer coords
+    ny = -y + state->editorViewRect.w; // to framebuffer coords
+
+    glm::vec3 objectPos = glm::unProject(
+        glm::vec3(nx, ny, 1.0f), // Try 1.0??
+        viewMatrix, 
+        projectionMatrix, 
+        glm::vec4(0, 0, state->editorViewBuffer.size.x/windowManager->contentScale.x, state->editorViewBuffer.size.y/windowManager->contentScale.y)
+    );
+
+    return glm::normalize(objectPos - state->camera.Position);
+}
+
+void RenderSystem::DrawRay(const glm::vec3& origin, const glm::vec3& direction, const float& length, const glm::vec3& color) {
+    Shader* rayShader = &state->engine_data.shaders["rayquad"];
+    rayShader->use();
+    glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    modelMatrix = glm::translate(modelMatrix, origin); // Translate
+    modelMatrix *= glm::mat4_cast(glm::quatLookAt(glm::normalize(direction), glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f,1.0f,length)); // Scale
+    rayShader->setMat4("model", modelMatrix);
+    rayShader->setVec3("endColor", color);
+
+    glDisable(GL_CULL_FACE);
+    glBindVertexArray(state->rayVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glEnable(GL_CULL_FACE);
+}
+
+// This may not work
+void RenderSystem::DrawLine(const glm::vec3& startPos, const glm::vec3& endPos, const glm::vec3& color) {
+    const glm::vec3 direction = endPos-startPos;
+    const float length = glm::length(direction);
+    Shader* rayShader = &state->engine_data.shaders["rayquad"];
+    rayShader->use();
+    glm::mat4 modelMatrix = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+    modelMatrix = glm::translate(modelMatrix, startPos); // Translate
+    modelMatrix *= glm::mat4_cast(glm::quatLookAt(glm::normalize(direction), glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f,1.0,length)); // Scale
+    rayShader->setMat4("model", modelMatrix);
+    rayShader->setVec3("endColor", color);
+
+    glDisable(GL_CULL_FACE);
+    glBindVertexArray(state->rayVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glEnable(GL_CULL_FACE);
+
+}
 
 
 struct VectorFloatHasher {

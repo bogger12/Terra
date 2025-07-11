@@ -5,7 +5,9 @@
 #include "../Events/KeyDown.hpp"
 #include <camera.h>
 #include "../Systems/RenderSystem.hpp"
+#include "../Systems/EditorSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
+#include "../Utilities/Physics.hpp"
 #include "../Utilities/Primitives.hpp"
 #include "../Utilities/Graphics.hpp"
 #include "../Systems/GUISystem.hpp"
@@ -32,13 +34,17 @@ std::map<std::string, float> time_map;
 
 // NEEDED FOR DYNAMIC LINKING SYMBOL LOOKUP
 #ifdef DEBUG
-extern "C" void CreateGame(WindowManager *gameWindowManager, GameState *gameState, bool isCreated) {
+extern "C" void CreateGame(WindowManager* gameWindow, GameState *gameState, bool isCreated) {
     state = gameState;
-    windowManager = gameWindowManager;
+    windowManager = gameWindow;
     WindowManager::InitialiseGlad();
+
     windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
     // glfwMakeContextCurrent(gameWindowManager->GetWindow());
-    if (!isCreated) Game::Init(gameWindowManager, gameState);
+
+    if (!isCreated) {
+        Game::Init(gameWindow, gameState);
+    }
 }
 
 extern "C" int RunGame(ImGuiContext *hostContext) {
@@ -51,11 +57,11 @@ extern "C" int RunGame(ImGuiContext *hostContext) {
 
 // Game Code
 
-void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
+void Game::Init(WindowManager* gameWindow, GameState *gameState)
 {
 #ifndef DEBUG
     state = gameState;
-    windowManager = gameWindowManager;
+    windowManager = gameWindow;
     windowManager->SetCallbacks(framebuffer_size_callback, mouse_callback, scroll_callback);
 #endif
 
@@ -71,6 +77,7 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
     shaders["instanced"] = Shader(asset("/shaders/model_litdirinstanced.vert"), asset("/shaders/model_litdirinstanced.frag"));
     shaders["postprocess"] = Shader(asset("/shaders/postprocessquad.vert"), asset("/shaders/postprocessquad.frag"));
     shaders["editorview"] = Shader(asset("/shaders/editorviewquad.vert"), asset("/shaders/editorviewquad.frag"));
+    shaders["rayquad"] = Shader(asset("/shaders/rayquad.vert"), asset("/shaders/rayquad.frag"));
     shaders["skybox"] = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
 
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
@@ -174,8 +181,8 @@ void Game::Init(WindowManager *gameWindowManager, GameState *gameState)
 
 
     // Because its a retina display wtf?? Gets reset on size change
-    windowManager->width *= 2;
-    windowManager->height *= 2;
+    windowManager->width *= windowManager->contentScale.x;
+    windowManager->height *= windowManager->contentScale.y;
     glViewport(0, 0, windowManager->width, windowManager->height);
 
 }
@@ -195,6 +202,7 @@ const int Game::Run(ImGuiContext *hostContext)
     // Setting Up Rendering Data
 
     Primitives::SetupQuadVAO(&state->quadVAO);
+    Primitives::SetupRayVAO(&state->rayVAO);
     Primitives::SetupSkyboxVAO(&state->skyboxVAO);
 
     // Primitives::SetupTest();
@@ -214,6 +222,8 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["model"].ID, "Lights", 1); // Lights
 
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["light"].ID, "Matrices", 0); // Matrices
+
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["rayquad"].ID, "Matrices", 0); // Matrices
 
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["skybox"].ID, "Lights", 1); // Lights
 
@@ -268,6 +278,18 @@ int Game::Events(float deltaTime)
     //     useMouse = true;
     // }
 
+    // Allow dragging out of viewport only if click starts inside viewport.
+    switch (glfwGetMouseButton(windowManager->GetWindow(), GLFW_MOUSE_BUTTON_LEFT)) {
+        case GLFW_PRESS:
+            if (Physics::InsideBBox2D( glm::vec2(state->lastX, state->lastY), state->editorViewRect)) {
+                state->clickedOnEditorWindow = true;
+            }
+            break;
+        case GLFW_RELEASE:
+            state->clickedOnEditorWindow = false;
+            break;
+    }
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         state->camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -308,7 +330,14 @@ void Game::Render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
     glEnable(GL_DEPTH_TEST);
     int focused = glfwGetWindowAttrib(windowManager->GetWindow(), GLFW_FOCUSED);
-    if (focused) RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size);
+    if (focused) {
+        RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size); // Also check screen bounds
+        if (EditorSystem::globalGizmo.transform != nullptr && state->clickedOnEditorWindow) {
+            EditorSystem::CalculateGizmoTransform(state->camera.Position, RenderSystem::PointerToRay(state->lastX, state->lastY), EditorSystem::globalGizmo);
+            RenderSystem::RenderGizmos(EditorSystem::globalGizmo);
+        }
+        // RenderSystem::DrawLine(state->lastCameraPos+glm::vec3(0,-1,0), state->objectPos);
+    }
     glDisable(GL_DEPTH_TEST);
 
     // Render to editor view buffer
@@ -331,7 +360,7 @@ void Game::Render()
 
     start = std::chrono::high_resolution_clock::now();
 
-    GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, *windowManager, &reload_shaders, &Init);
+    GUISystem::DrawSideBar(state->m_registry, state, &state->engine_data, &reload_shaders, &Init);
     stop = std::chrono::high_resolution_clock::now();
     time_map["1 ImGui Fill"] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()/1000.0f;
 
@@ -375,24 +404,23 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
     // std::cout << "mouse moved " << xposIn << " " << yposIn << std::endl;
-    if (!state->useMouse) return;
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
+    if (state->useMouse) {
+        if (state->firstMouse)
+        {
+            state->lastX = xpos;
+            state->lastY = ypos;
+            state->firstMouse = false;
+        }
 
-    if (state->firstMouse)
-    {
-        state->lastX = xpos;
-        state->lastY = ypos;
-        state->firstMouse = false;
+        float xoffset = xpos - state->lastX;
+        float yoffset = state->lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+        state->camera.ProcessMouseMovement(xoffset, yoffset);
     }
-
-    float xoffset = xpos - state->lastX;
-    float yoffset = state->lastY - ypos; // reversed since y-coordinates go from bottom to top
     state->lastX = xpos;
     state->lastY = ypos;
-
-    state->camera.ProcessMouseMovement(xoffset, yoffset);
-
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
