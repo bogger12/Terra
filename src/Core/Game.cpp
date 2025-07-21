@@ -3,11 +3,14 @@
 #include "Game.hpp"
 #include "../Components/Components.hpp"
 #include "../Events/KeyDown.hpp"
+#include "../Events/Interactions.hpp"
 #include <camera.h>
+#include <terraphysics.h>
+#include <terramath.h>
 #include "../Systems/RenderSystem.hpp"
-#include "../Systems/EditorSystem.hpp"
+#include "../Editor/Gizmos.hpp"
+#include "../Editor/Editor.hpp"
 #include "../Systems/TextureSystem.hpp"
-#include "../Utilities/Physics.hpp"
 #include "../Utilities/Primitives.hpp"
 #include "../Utilities/Graphics.hpp"
 #include "../Systems/GUISystem.hpp"
@@ -78,6 +81,7 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
     shaders["postprocess"] = Shader(asset("/shaders/postprocessquad.vert"), asset("/shaders/postprocessquad.frag"));
     shaders["editorview"] = Shader(asset("/shaders/editorviewquad.vert"), asset("/shaders/editorviewquad.frag"));
     shaders["rayquad"] = Shader(asset("/shaders/rayquad.vert"), asset("/shaders/rayquad.frag"));
+    shaders["gizmoplane"] = Shader(asset("/shaders/gizmoplane.vert"), asset("/shaders/gizmoplane.frag"));
     shaders["skybox"] = Shader(asset("/shaders/skybox.vert"), asset("/shaders/skybox.frag"));
 
     // MaterialTexture container1 = MaterialTexture{asset("/textures/container.jpg"), GL_RGB};
@@ -93,6 +97,7 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
     Model planet = Model(asset("/models/planet/planet.obj"));
     Model testlevel = Model(asset("/models/testlevel/testlevel.obj"));
     state->rock = new Model(asset("/models/rock/rock.obj"));
+    state->cylinder = new Model(asset("/models/cylinder/cylinder.obj"));
 
 
 
@@ -149,6 +154,21 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
     state->m_registry.emplace<RenderingData>(test_level_entity, &state->engine_data.shaders["model"]);
 
 
+    for (int i=0;i<3;i++) {    
+        glm::mat4 cylinderMatrix = glm::mat4(1.0);
+        Gizmos::SetGizmoLineMatrix(cylinderMatrix, (Gizmo::AxisSelected)(i), glm::vec3(0.0f), 0.5f);
+        glm::vec3 pos; glm::quat rot; glm::vec3 scale;
+        Math::DecomposeMatrix(cylinderMatrix, pos, rot, scale);
+
+        const auto cylinder_entity = state->m_registry.create();
+        state->m_registry.emplace<Transform>(cylinder_entity, pos, glm::mat4_cast(rot), scale);
+        state->m_registry.emplace<ModelWrapper>(cylinder_entity, *state->cylinder);
+        state->m_registry.emplace<RenderingData>(cylinder_entity, &state->engine_data.shaders["model"]);
+
+    };
+
+
+
     // const auto planet_entity = state->m_registry.create();
     // state->m_registry.emplace<Transform>(planet_entity, glm::vec3(0.0f, 0.0f, 0.0f), glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     // state->m_registry.emplace<ModelWrapper>(planet_entity, planet);
@@ -202,6 +222,7 @@ const int Game::Run(ImGuiContext *hostContext)
     // Setting Up Rendering Data
 
     Primitives::SetupQuadVAO(&state->quadVAO);
+    Primitives::SetupQuadNormalsVAO(&state->quadNormalsVAO);
     Primitives::SetupRayVAO(&state->rayVAO);
     Primitives::SetupSkyboxVAO(&state->skyboxVAO);
 
@@ -224,6 +245,7 @@ const int Game::Run(ImGuiContext *hostContext)
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["light"].ID, "Matrices", 0); // Matrices
 
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["rayquad"].ID, "Matrices", 0); // Matrices
+    Primitives::SetShaderUniformBuffer(state->engine_data.shaders["gizmoplane"].ID, "Matrices", 0); // Matrices
 
     Primitives::SetShaderUniformBuffer(state->engine_data.shaders["skybox"].ID, "Lights", 1); // Lights
 
@@ -281,12 +303,12 @@ int Game::Events(float deltaTime)
     // Allow dragging out of viewport only if click starts inside viewport.
     switch (glfwGetMouseButton(windowManager->GetWindow(), GLFW_MOUSE_BUTTON_LEFT)) {
         case GLFW_PRESS:
-            if (Physics::InsideBBox2D( glm::vec2(state->lastX, state->lastY), state->editorViewRect)) {
-                state->clickedOnEditorWindow = true;
-            }
+            state->clickOnWindow.MouseDown(glm::vec2(state->lastX, state->lastY));
+            Editor::lastClickInsideEditorWindow = Physics::PointInsideBBox2D( glm::vec2(state->lastX, state->lastY), Editor::viewRect);
             break;
         case GLFW_RELEASE:
-            state->clickedOnEditorWindow = false;
+            Editor::lastClickInsideEditorWindow = false;
+            state->clickOnWindow.MouseUp();
             break;
     }
 
@@ -331,12 +353,16 @@ void Game::Render()
     glEnable(GL_DEPTH_TEST);
     int focused = glfwGetWindowAttrib(windowManager->GetWindow(), GLFW_FOCUSED);
     if (focused) {
-        RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size); // Also check screen bounds
-        if (EditorSystem::globalGizmo.transform != nullptr && state->clickedOnEditorWindow) {
-            EditorSystem::CalculateGizmoTransform(state->camera.Position, RenderSystem::PointerToRay(state->lastX, state->lastY), EditorSystem::globalGizmo);
-            RenderSystem::RenderGizmos(EditorSystem::globalGizmo);
+        if (Gizmos::globalGizmo.transform != nullptr) {
+            glm::vec3 pointerRayDirection = RenderSystem::PointerToRay(glm::vec2(state->lastX, state->lastY));
+            Gizmos::CalculateGizmoTransform(state->camera.Position, pointerRayDirection, Gizmos::globalGizmo);
+            RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size);
+            RenderSystem::RenderGizmos(Gizmos::globalGizmo, state->camera.Position, pointerRayDirection);
+        } else {
+            RenderSystem::Render(state->m_registry, state->fov, state->camera, state->editorViewBuffer.size); // Also check screen bounds
         }
         // RenderSystem::DrawLine(state->lastCameraPos+glm::vec3(0,-1,0), state->objectPos);
+        Debug::LogErrors();
     }
     glDisable(GL_DEPTH_TEST);
 

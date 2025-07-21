@@ -2,7 +2,8 @@
 #include "../Components/Components.hpp"
 #include "../Systems/RenderSystem.hpp"
 #include "../Systems/TextureSystem.hpp"
-#include "../Systems/EditorSystem.hpp"
+#include "../Editor/Gizmos.hpp"
+#include "../Editor/Editor.hpp"
 #include "../Utilities/Graphics.hpp"
 #include "../Utilities/Debug.hpp"
 #include "../Core/OSMethods.hpp"
@@ -252,7 +253,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
         if (state->editorViewBuffer.size != size) {
             Graphics::ChangeFramebufferSize(&state->postProcessBuffer, size);
             Graphics::ChangeFramebufferSize(&state->editorViewBuffer, size);
-            state->editorViewRect = glm::vec4(absMin.x, absMin.y, absMax.x, absMax.y);
+            Editor::viewRect = glm::vec4(absMin.x, absMin.y, absMax.x, absMax.y);
             // state->editorViewRect = glm::vec4(0,0, size.x, size.y);
         }
 
@@ -329,7 +330,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
             std::string entityLabel = entityType + " " + std::to_string(id);
             if (ImGui::Selectable(entityLabel.c_str(), selected_entity == entity)) {
                 selected_entity = entity;
-                EditorSystem::globalGizmo.transform = &registry.get<Transform>(selected_entity);
+                Gizmos::globalGizmo.transform = &registry.get<Transform>(selected_entity);
                 
                 Debug::Log("selected " + entityLabel);
             };

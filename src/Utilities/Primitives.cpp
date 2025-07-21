@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "model.h"
 #include "../Core/GameState.hpp"
+#include <terraphysics.h>
 
 
 float quadVertices[] = {
@@ -18,6 +19,18 @@ float quadVertices[] = {
         1.0f, -1.0f,  0.0f,  1.0f, 0.0f,
         1.0f, 1.0f,  0.0f,  1.0f, 1.0f
 };
+
+float quadNormalsVertices[] = {
+    // positions          // Normals 
+        -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        -1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+
+        -1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        1.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+        1.0f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,
+};
+
 
 float rayVertices[] = { // Quad on the x-z plane from 0,0,0 to 0,0,-1
     // positions 
@@ -76,8 +89,6 @@ float skyboxVertices[] = {
      1.0f, -1.0f,  1.0f
 };
 
-
-
 void Primitives::SetupQuadVAO(unsigned int *quadVAO) {
     unsigned int vbo;
 
@@ -94,6 +105,25 @@ void Primitives::SetupQuadVAO(unsigned int *quadVAO) {
     glEnableVertexAttribArray(0);
     // texture attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+}
+
+void Primitives::SetupQuadNormalsVAO(unsigned int *quadNormalsVAO) {
+    unsigned int vbo;
+
+    glGenVertexArrays(1, quadNormalsVAO);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(*quadNormalsVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadNormalsVertices), quadNormalsVertices, GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 }
 

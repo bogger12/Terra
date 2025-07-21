@@ -6,6 +6,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "../Core/GameState.hpp"
+#include "../Editor/Editor.hpp"
+#include <terraphysics.h>
 
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -92,7 +94,7 @@ void RenderSystem::Render(entt::registry &registry, float fov, Camera camera, gl
         renderingData.shader->setFloat("shininess", 32);
         
 
-        modelWrapper.model.Draw(*renderingData.shader, -1);
+        modelWrapper.model.Draw(*renderingData.shader, true, -1);
     });
     glEnable(GL_CULL_FACE); 
 
@@ -125,20 +127,52 @@ void RenderSystem::Render(entt::registry &registry, float fov, Camera camera, gl
 
 };
 
-void RenderSystem::RenderGizmos(Gizmo& gizmo) {
+
+void RenderSystem::RenderGizmos(Gizmo& gizmo, const glm::vec3& rayOrigin, const glm::vec3& pointerRayDirection, const bool recalcGizmoMatrices) {
+    if (gizmo.transform == nullptr) return;
+    Shader* gizmoShader = &state->engine_data.shaders["gizmoplane"];
+
+    if (recalcGizmoMatrices) Gizmos::SetGizmoMatrices(gizmo);
+
+    glm::vec3 colors[] = { glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)};
+
+    // auto faceCamera = [&](const glm::vec3 multvec) -> glm::mat4 {
+    //     return glm::mat4_cast(glm::quatLookAt((state->camera.Position - gizmo.transform->position) * multvec, glm::vec3(0.0f, 1.0f, 0.0f)));
+    // };
     
+    gizmoShader->use();
+
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glBindVertexArray(state->quadVAO);
+
+    for (int i=0; i<3; i++) {
+        // Render plane then arrow
+
+        gizmoShader->setMat4("model", gizmo.planeMatrices[i]);
+        gizmoShader->setVec3("color", colors[i]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        bool selected = gizmo.axis == (Gizmo::AxisSelected)(i);
+        gizmoShader->setVec3("color", colors[i]* (selected ? 0.1f : 1.0f));
+        gizmoShader->setMat4("model", gizmo.axisMatrices[i]);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    }
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
 
-glm::vec3 RenderSystem::PointerToRay(float& x, float& y) {
+glm::vec3 RenderSystem::PointerToRay(const glm::vec2& pointer) {
 
-    assert(state->editorViewBuffer.size.x/windowManager->contentScale.x == state->editorViewRect.z - state->editorViewRect.x); // Check width is correct
-    assert(state->editorViewBuffer.size.y/windowManager->contentScale.y == state->editorViewRect.w - state->editorViewRect.y); // Check height is correct
+    assert(state->editorViewBuffer.size.x/windowManager->contentScale.x == Editor::viewRect.z - Editor::viewRect.x); // Check width is correct
+    assert(state->editorViewBuffer.size.y/windowManager->contentScale.y == Editor::viewRect.w - Editor::viewRect.y); // Check height is correct
 
     // Convert to Normalized Device Coordinates:
     int nx, ny;
 
-    nx = x - state->editorViewRect.x; // to framebuffer coords
-    ny = -y + state->editorViewRect.w; // to framebuffer coords
+    nx = pointer.x - Editor::viewRect.x; // to framebuffer coords
+    ny = -pointer.y + Editor::viewRect.w; // to framebuffer coords
 
     glm::vec3 objectPos = glm::unProject(
         glm::vec3(nx, ny, 1.0f), // Try 1.0??

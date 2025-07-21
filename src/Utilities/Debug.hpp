@@ -18,4 +18,12 @@ class Debug {
         static std::ostringstream& LogStream() {
             return state->logStream;
         }
+
+        static void LogErrors() {
+            GLenum err;
+            while((err = glGetError()) != GL_NO_ERROR)
+            {
+                state->logStream << "GL ERROR: " << err << std::endl;
+            }
+        }
 };

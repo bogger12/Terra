@@ -62,7 +62,8 @@ struct ColorMaterial {
     vec3 specular;
 };
 uniform ColorMaterial colorMat;
-bool useColor = colorMat.diffuse != vec3(0.0);
+uniform bool useColor;
+// bool useColor = colorMat.diffuse != vec3(0.0);
 
 
 uniform sampler2D texture_diffuse1;
@@ -114,6 +115,8 @@ void main()
 {   
     float alpha = texture(texture_diffuse1, TexCoords).a;
     if (alpha <= 0.1) discard; 
+    // FragColor = vec4(vec3(shininess/3), 1.0);
+    // return;
     // Properties
     vec3 normal;
     //     FragColor = vec4(dirdirection, 1.0);

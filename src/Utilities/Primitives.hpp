@@ -8,6 +8,7 @@ class Primitives {
     public:
         Primitives() = default;
         static void SetupQuadVAO(unsigned int *quadVAO);
+        static void SetupQuadNormalsVAO(unsigned int *quadNormalsVAO);
         static void SetupRayVAO(unsigned int *rayVAO);
         static void SetupSkyboxVAO(unsigned int *skyboxVAO);
         static void SetupUniformBuffer(unsigned int &ubo, unsigned int size, unsigned int uniformBlockBinding);
