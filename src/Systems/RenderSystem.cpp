@@ -149,12 +149,13 @@ void RenderSystem::RenderGizmos(Gizmo& gizmo, const glm::vec3& rayOrigin, const 
     for (int i=0; i<3; i++) {
         // Render plane then arrow
 
+        bool planeSelected = gizmo.plane == (Gizmo::PlaneSelected)(i);
+        gizmoShader->setVec3("color", colors[i] + (planeSelected ? glm::vec3(0.5f) : glm::vec3(0.0f)));
         gizmoShader->setMat4("model", gizmo.planeMatrices[i]);
-        gizmoShader->setVec3("color", colors[i]);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        bool selected = gizmo.axis == (Gizmo::AxisSelected)(i);
-        gizmoShader->setVec3("color", colors[i]* (selected ? 0.1f : 1.0f));
+        bool axisSelected = gizmo.axis == (Gizmo::AxisSelected)(i);
+        gizmoShader->setVec3("color", colors[i] + (axisSelected ? glm::vec3(0.5f) : glm::vec3(0.0f)));
         gizmoShader->setMat4("model", gizmo.axisMatrices[i]);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
