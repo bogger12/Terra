@@ -2,6 +2,8 @@
 #include <glm/glm.hpp>
 #include <math.h>
 
+#define eps 0.00001
+
 namespace Physics {
 
 
@@ -63,6 +65,16 @@ namespace Physics {
         glm::vec3 intersect = RayPlaneIntersection(l0, l, bbox.p1, n);
         return PointInsideBBox(intersect, bbox) ? intersect : l0;
     };
+
+    inline glm::vec3 RayTransformedQuadIntersection(const glm::vec3& l0, const glm::vec3& l, BBox bbox, glm::vec3 n, glm::mat4 quadTransform = glm::mat4(1.0)) {
+        glm::mat4 inverseTransform = glm::inverse(quadTransform);
+        glm::vec3 eye = inverseTransform * glm::vec4(l0, 1.0f);
+        glm::vec3 d = glm::normalize(inverseTransform * glm::vec4(l, 0.0f));
+        glm::vec3 intersect = RayQuadIntersection(eye, d, bbox, n);
+        if (glm::length(intersect - l0) > eps) {
+            return glm::vec3(quadTransform*glm::vec4(intersect, 1.0f)); // Return untransformed intersect
+        } else return l0;
+    }
 
     inline glm::vec3 RayCylinderIntersection(const glm::vec3& l0, const glm::vec3& l, const float &r, const float &h, glm::mat4 cylinderTransform = glm::mat4(1.0)) {
         glm::mat4 inverseTransform = glm::inverse(cylinderTransform);

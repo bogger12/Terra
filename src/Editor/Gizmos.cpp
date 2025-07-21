@@ -7,61 +7,106 @@
 Gizmo Gizmos::globalGizmo;
 
 
+void CalculateGizmoAxisIntersectsTransforms(const bool& firstAxisSelect, const glm::vec3& rayOrigin, const glm::vec3& rayDirection, Gizmo& gizmo) {
+    glm::vec3& gizmoPos = gizmo.transform->position;
+
+    if (firstAxisSelect) {
+        for (int i=0;i<3;i++) {
+            glm::vec3 intersect = Physics::RayCylinderIntersection(rayOrigin, rayDirection, 1.0f, 1.0f, gizmo.axisMatrices[i]);
+            if (glm::length(intersect - rayOrigin) > eps && gizmo.axis == Gizmo::AxisSelected::NONE) {
+                gizmo.axis = (Gizmo::AxisSelected)(i);
+                gizmo.startPosition = gizmoPos;
+                gizmo.cursorOffset = intersect - gizmoPos;
+            }
+        };
+    }
+    
+    switch (gizmo.axis) {
+        case Gizmo::AxisSelected::X: {
+            glm::vec3 normalXYaxis = glm::normalize(glm::vec3( 0, 0, 1 ));
+            glm::vec3 pointXY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXYaxis);
+            gizmoPos.x = pointXY.x - gizmo.cursorOffset.x;
+            break;
+        }
+        case Gizmo::AxisSelected::Y: {
+            glm::vec3 normalXYaxis = glm::normalize(glm::vec3( 0, 0, 1 ));
+            glm::vec3 pointXY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXYaxis);
+            gizmoPos.y = pointXY.y - gizmo.cursorOffset.y;
+            break;
+        }
+        case Gizmo::AxisSelected::Z: {
+            glm::vec3 normalZaxis = glm::normalize(glm::vec3( 1, 0, 0 ));
+            glm::vec3 pointZ = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalZaxis);
+            gizmoPos.z = pointZ.z - gizmo.cursorOffset.z;
+            break;
+        }
+        case Gizmo::AxisSelected::NONE:
+            break;
+    }
+}
+
+void CalculateGizmoPlaneIntersectsTransforms(const bool& firstPlaneSelect, const glm::vec3& rayOrigin, const glm::vec3& rayDirection, Gizmo& gizmo) {
+    glm::vec3& gizmoPos = gizmo.transform->position;
+    
+    if (firstPlaneSelect) {
+        for (int i=0;i<3;i++) {
+            glm::vec3 intersect = Physics::RayTransformedQuadIntersection(rayOrigin, rayDirection, Physics::BBox(glm::vec3(-1, -1, 0), glm::vec3(1, 1, 0)), glm::vec3(0,0,1), gizmo.planeMatrices[i]);
+            if (glm::length(intersect - rayOrigin) > eps && gizmo.plane == Gizmo::PlaneSelected::NONE) {
+                gizmo.plane = (Gizmo::PlaneSelected)(i);
+                gizmo.startPosition = gizmoPos;
+                gizmo.cursorOffset = intersect - gizmoPos;
+            }
+        };
+    }
+
+    switch (gizmo.plane) {
+        case Gizmo::PlaneSelected::ZY: {
+            glm::vec3 normalZY = glm::normalize(glm::vec3( 1, 0, 0 ));
+            glm::vec3 pointZY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalZY);
+            glm::vec3 objectPos = (pointZY - gizmo.cursorOffset);
+            gizmoPos = glm::vec3(gizmoPos.x, objectPos.y, objectPos.z);
+            break;
+        }
+        case Gizmo::PlaneSelected::XZ: {
+            glm::vec3 normalXZ = glm::normalize(glm::vec3( 0, 1, 0 ));
+            glm::vec3 pointXZ = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXZ);
+            glm::vec3 objectPos = (pointXZ - gizmo.cursorOffset);
+            gizmoPos = glm::vec3(objectPos.x, gizmoPos.y, objectPos.z);
+            break;
+        }
+        case Gizmo::PlaneSelected::XY: {
+            glm::vec3 normalXY = glm::normalize(glm::vec3( 0, 0, 1 ));
+            glm::vec3 pointXY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXY);
+            glm::vec3 objectPos = (pointXY - gizmo.cursorOffset);
+            gizmoPos = glm::vec3(objectPos.x, objectPos.y, gizmoPos.z);
+            break;
+        }
+        case Gizmo::PlaneSelected::NONE:
+            break;
+    }
+}
+
 
 void Gizmos::CalculateGizmoTransform(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, Gizmo& gizmo) {
 
     bool firstAxisSelect = gizmo.axis == Gizmo::AxisSelected::NONE;
+    bool firstPlaneSelect = gizmo.plane == Gizmo::PlaneSelected::NONE;
     
-    gizmo.plane = Gizmo::PlaneSelected::NONE;
-
-
     if (Editor::lastClickInsideEditorWindow) {
-        glm::vec3& gizmoPos = gizmo.transform->position;
-
         Gizmos::SetGizmoMatrices(gizmo);
-
-        if (firstAxisSelect) {
-            for (int i=0;i<3;i++) {
-                glm::vec3 intersect = Physics::RayCylinderIntersection(rayOrigin, rayDirection, 1.0f, 1.0f, gizmo.axisMatrices[i]);
-                if (intersect != rayOrigin && gizmo.axis == Gizmo::AxisSelected::NONE) {
-                    gizmo.axis = (Gizmo::AxisSelected)(i);
-                    gizmo.startPosition = gizmoPos;
-                    gizmo.cursorOffset = intersect - gizmoPos;
-                }
-            };
-        }
-        
-        switch (gizmo.axis) {
-            case Gizmo::AxisSelected::X: {
-                glm::vec3 normalXYaxis = glm::normalize(glm::vec3( 0, 0, 1 ));
-                glm::vec3 pointXY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXYaxis);
-                gizmoPos.x = pointXY.x - gizmo.cursorOffset.x;
-                break;
-            }
-            case Gizmo::AxisSelected::Y: {
-                glm::vec3 normalXYaxis = glm::normalize(glm::vec3( 0, 0, 1 ));
-                glm::vec3 pointXY = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalXYaxis);
-                gizmoPos.y = pointXY.y - gizmo.cursorOffset.y;
-                break;
-            }
-            case Gizmo::AxisSelected::Z: {
-                glm::vec3 normalZaxis = glm::normalize(glm::vec3( 1, 0, 0 ));
-                glm::vec3 pointZ = Physics::RayPlaneIntersection(rayOrigin, rayDirection, gizmoPos, normalZaxis);
-                gizmoPos.z = pointZ.z - gizmo.cursorOffset.z;
-                break;
-            }
-            case Gizmo::AxisSelected::NONE:
-                break;
-        }
+        if (firstPlaneSelect) CalculateGizmoAxisIntersectsTransforms(firstAxisSelect, rayOrigin, rayDirection, gizmo);
+        if (firstAxisSelect) CalculateGizmoPlaneIntersectsTransforms(firstPlaneSelect, rayOrigin, rayDirection, gizmo);
     }
     else {
         gizmo.axis = Gizmo::AxisSelected::NONE;
+        gizmo.plane = Gizmo::PlaneSelected::NONE;
     }
 
     // Needs to recalc matrices if gizmo position changed
     RenderSystem::RenderGizmos(Gizmos::globalGizmo, rayOrigin, rayDirection);
-
 }
+
+
 
 void Gizmos::SetGizmoMatrices(Gizmo& gizmo) {
     glm::vec3 translation = gizmo.transform->position; 
