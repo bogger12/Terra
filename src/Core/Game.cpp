@@ -156,7 +156,7 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
 
     for (int i=0;i<3;i++) {    
         glm::mat4 cylinderMatrix = glm::mat4(1.0);
-        Gizmos::SetGizmoLineMatrix(cylinderMatrix, (Gizmo::AxisSelected)(i), glm::vec3(0.0f), 0.5f);
+        Gizmos::SetGizmoLineMatrix(cylinderMatrix, (Gizmo::AxisSelected)(i), glm::vec3(0.0f), 0.5f, 0.05);
         glm::vec3 pos; glm::quat rot; glm::vec3 scale;
         Math::DecomposeMatrix(cylinderMatrix, pos, rot, scale);
 

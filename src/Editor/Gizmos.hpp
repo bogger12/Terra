@@ -38,7 +38,7 @@ class Gizmos {
         static Gizmo globalGizmo;
         static glm::vec3 clickStart;
         static void CalculateGizmoTransform(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, Gizmo& gizmo = globalGizmo);
-        static void SetGizmoLineMatrix(glm::mat4& modelMatrix, const Gizmo::AxisSelected& axis, const glm::vec3& pos, const float& lineLength);
+        static void SetGizmoLineMatrix(glm::mat4& modelMatrix, const Gizmo::AxisSelected& axis, const glm::vec3& pos, const float& lineLength, const float& lineWidth);
         static void SetGizmoPlaneMatrix(glm::mat4& modelMatrix, const Gizmo::PlaneSelected& plane, const glm::vec3& translation, const float& translationDistance, glm::vec3& scale);
         static void SetGizmoMatrices(Gizmo& gizmo);
     };

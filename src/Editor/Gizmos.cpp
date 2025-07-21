@@ -111,24 +111,27 @@ void Gizmos::CalculateGizmoTransform(const glm::vec3& rayOrigin, const glm::vec3
 void Gizmos::SetGizmoMatrices(Gizmo& gizmo) {
     glm::vec3 translation = gizmo.transform->position; 
 
+    float scaleFactor = glm::distance(state->camera.Position, translation)/15.0f;
+
     for (int i=0; i<3; i++) {
 
         // Set Plane Transform Matrix
         gizmo.planeMatrices[i] = glm::mat4(1.0f);
-        glm::vec3 scale = glm::vec3(0.15f);
-        float translationDistance = 0.5f;
+        glm::vec3 scale = glm::vec3(scaleFactor * 0.15f);
+        float translationDistance = scaleFactor * 0.5f;
         Gizmos::SetGizmoPlaneMatrix(gizmo.planeMatrices[i], (Gizmo::PlaneSelected)(i), translation, translationDistance, scale);
 
         // Set Axis Transform Matrix
         gizmo.axisMatrices[i] = glm::mat4(1.0f);
-        float lineLength = 0.5f;
-        Gizmos::SetGizmoLineMatrix(gizmo.axisMatrices[i], (Gizmo::AxisSelected)(i), translation, lineLength);
+        float lineLength = scaleFactor * 0.5f;
+        float lineWidth = scaleFactor * 0.05f;
+        Gizmos::SetGizmoLineMatrix(gizmo.axisMatrices[i], (Gizmo::AxisSelected)(i), translation, lineLength, lineWidth);
     }
 }
 
 
 
-void Gizmos::SetGizmoLineMatrix(glm::mat4& modelMatrix, const Gizmo::AxisSelected& axis, const glm::vec3& pos, const float& lineLength) {
+void Gizmos::SetGizmoLineMatrix(glm::mat4& modelMatrix, const Gizmo::AxisSelected& axis, const glm::vec3& pos, const float& lineLength, const float& lineWidth) {
     switch (axis) {
         case Gizmo::AxisSelected::X:
             modelMatrix = glm::translate(modelMatrix, pos+glm::vec3(lineLength, 0.0f, 0.0f));
@@ -147,7 +150,7 @@ void Gizmos::SetGizmoLineMatrix(glm::mat4& modelMatrix, const Gizmo::AxisSelecte
         case Gizmo::AxisSelected::NONE:
             break;
     }
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.05f, lineLength, 0.05f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(lineWidth, lineLength, lineWidth));
 }
 
 void Gizmos::SetGizmoPlaneMatrix(glm::mat4& modelMatrix, const Gizmo::PlaneSelected& plane, const glm::vec3& translation, const float& translationDistance, glm::vec3& scale) {
