@@ -254,7 +254,6 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
             Graphics::ChangeFramebufferSize(&state->postProcessBuffer, size);
             Graphics::ChangeFramebufferSize(&state->editorViewBuffer, size);
             Editor::viewRect = glm::vec4(absMin.x, absMin.y, absMax.x, absMax.y);
-            // state->editorViewRect = glm::vec4(0,0, size.x, size.y);
         }
 
         ImGui::Image((ImTextureID)(intptr_t)state->editorViewBuffer.renderTexture, ImVec2(editorViewSize), {0, 1}, {1, 0});
@@ -290,10 +289,7 @@ void GUISystem::DrawSideBar(entt::registry &registry, GameState *state, EngineDa
 
         if (ImGui::Button("Reload Shaders")) reload_shaders(); 
 
-        if (ImGui::Button("Reinit State")) GameInit(windowManager, state);
-
-        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) ImGui::Text(" DockingEnable");
-        
+        if (ImGui::Button("Reinit State")) GameInit(windowManager, state);        
         
         float aspect = editorViewSize.x / editorViewSize.y;
         ImGui::Image((ImTextureID)(intptr_t)state->postProcessBuffer.renderTexture, ImVec2(windowWidth * 0.95, windowWidth * 0.95 / aspect), {0, 1}, {1, 0});

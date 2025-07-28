@@ -70,6 +70,7 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
 
     // Clear entities
     state->m_registry.clear();
+    
 
     
     std::unordered_map<std::string, Shader> &shaders = state->engine_data.shaders;
@@ -153,19 +154,6 @@ void Game::Init(WindowManager* gameWindow, GameState *gameState)
     state->m_registry.emplace<ModelWrapper>(test_level_entity, testlevel);
     state->m_registry.emplace<RenderingData>(test_level_entity, &state->engine_data.shaders["model"]);
 
-
-    for (int i=0;i<3;i++) {    
-        glm::mat4 cylinderMatrix = glm::mat4(1.0);
-        Gizmos::SetGizmoLineMatrix(cylinderMatrix, (Gizmo::AxisSelected)(i), glm::vec3(0.0f), 0.5f, 0.05);
-        glm::vec3 pos; glm::quat rot; glm::vec3 scale;
-        Math::DecomposeMatrix(cylinderMatrix, pos, rot, scale);
-
-        const auto cylinder_entity = state->m_registry.create();
-        state->m_registry.emplace<Transform>(cylinder_entity, pos, glm::mat4_cast(rot), scale);
-        state->m_registry.emplace<ModelWrapper>(cylinder_entity, *state->cylinder);
-        state->m_registry.emplace<RenderingData>(cylinder_entity, &state->engine_data.shaders["model"]);
-
-    };
 
 
 
